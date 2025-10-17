@@ -48,7 +48,7 @@ export class GuestRepository {
         case 'guest_id':
           // Exact match, case-insensitive for guest_id
           sqlQuery = `
-            SELECT guest_id, name, english_name, khmer_name, amount_khr, amount_usd, 
+            SELECT guest_id, english_name, khmer_name, amount_khr, amount_usd, 
                    payment_method, guest_of, is_duplicate, created_at, updated_at
             FROM guestlist 
             WHERE LOWER(guest_id) = LOWER(?) 
@@ -70,63 +70,59 @@ export class GuestRepository {
         case 'english_name':
           // Partial match, case-insensitive for English names
           sqlQuery = `
-            SELECT guest_id, name, english_name, khmer_name, amount_khr, amount_usd, 
+            SELECT guest_id, english_name, khmer_name, amount_khr, amount_usd, 
                    payment_method, guest_of, is_duplicate, created_at, updated_at
             FROM guestlist 
-            WHERE (LOWER(name) LIKE LOWER(?) OR LOWER(english_name) LIKE LOWER(?))
+            WHERE LOWER(english_name) LIKE LOWER(?)
               AND is_duplicate = 0
             ORDER BY 
               CASE 
-                WHEN LOWER(name) = LOWER(?) THEN 1
-                WHEN LOWER(english_name) = LOWER(?) THEN 2
-                WHEN LOWER(name) LIKE LOWER(?) THEN 3
-                WHEN LOWER(english_name) LIKE LOWER(?) THEN 4
-                ELSE 5
+                WHEN LOWER(english_name) = LOWER(?) THEN 1
+                WHEN LOWER(english_name) LIKE LOWER(?) THEN 2
+                ELSE 3
               END,
               created_at DESC
             LIMIT ? OFFSET ?
           `;
           const likePattern = `%${sanitizedQuery}%`;
-          params = [likePattern, likePattern, sanitizedQuery, sanitizedQuery, likePattern, likePattern, limit, offset];
+          params = [likePattern, sanitizedQuery, likePattern, limit, offset];
           
           countQuery = `
             SELECT COUNT(*) as count 
             FROM guestlist 
-            WHERE (LOWER(name) LIKE LOWER(?) OR LOWER(english_name) LIKE LOWER(?))
+            WHERE (LOWER(english_name) LIKE LOWER(?))
               AND is_duplicate = 0
           `;
-          countParams = [likePattern, likePattern];
+          countParams = [likePattern];
           break;
 
         case 'khmer_name':
           // Partial match for Khmer names
           sqlQuery = `
-            SELECT guest_id, name, english_name, khmer_name, amount_khr, amount_usd, 
+            SELECT guest_id, english_name, khmer_name, amount_khr, amount_usd, 
                    payment_method, guest_of, is_duplicate, created_at, updated_at
             FROM guestlist 
-            WHERE (LOWER(name) LIKE LOWER(?) OR LOWER(khmer_name) LIKE LOWER(?))
+            WHERE (LOWER(khmer_name) LIKE LOWER(?))
               AND is_duplicate = 0
             ORDER BY 
               CASE 
                 WHEN LOWER(khmer_name) = LOWER(?) THEN 1
-                WHEN LOWER(name) = LOWER(?) THEN 2
-                WHEN LOWER(khmer_name) LIKE LOWER(?) THEN 3
-                WHEN LOWER(name) LIKE LOWER(?) THEN 4
-                ELSE 5
+                WHEN LOWER(khmer_name) LIKE LOWER(?) THEN 2
+                ELSE 3
               END,
               created_at DESC
             LIMIT ? OFFSET ?
           `;
           const khmerLikePattern = `%${sanitizedQuery}%`;
-          params = [khmerLikePattern, khmerLikePattern, sanitizedQuery, sanitizedQuery, khmerLikePattern, khmerLikePattern, limit, offset];
+           params = [khmerLikePattern, sanitizedQuery, khmerLikePattern, limit, offset];
           
           countQuery = `
             SELECT COUNT(*) as count 
             FROM guestlist 
-            WHERE (LOWER(name) LIKE LOWER(?) OR LOWER(khmer_name) LIKE LOWER(?))
+            WHERE (LOWER(khmer_name) LIKE LOWER(?))
               AND is_duplicate = 0
           `;
-          countParams = [khmerLikePattern, khmerLikePattern];
+          countParams = [khmerLikePattern];
           break;
 
         default:
@@ -143,7 +139,6 @@ export class GuestRepository {
       // Convert and normalize the guests to match Guest type
       const normalizedGuests: Guest[] = guests.map(guest => ({
         guest_id: guest.guest_id,
-        name: guest.name,
         english_name: guest.english_name || null,
         khmer_name: guest.khmer_name || null,
         amount_khr: guest.amount_khr || 0,
@@ -252,8 +247,8 @@ export class GuestRepository {
       // Insert guest with timestamps
       const insertGuest = db.prepare(`
         INSERT INTO guestlist 
-        (guest_id, name, amount_khr, amount_usd, payment_method, guest_of, is_duplicate) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (guest_id, english_name, khmer_name, amount_khr, amount_usd, payment_method, guest_of, is_duplicate) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const insertActivity = db.prepare(`

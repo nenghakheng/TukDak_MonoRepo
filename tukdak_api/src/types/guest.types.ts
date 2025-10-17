@@ -24,7 +24,6 @@ export interface CreateGuestRequest {
 }
 
 export interface UpdateGuestRequest {
-  name?: string;
   english_name?: string;
   khmer_name?: string;
   amount_khr?: number;

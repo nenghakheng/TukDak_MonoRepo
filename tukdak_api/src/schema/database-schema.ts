@@ -3,7 +3,6 @@ export const DATABASE_SCHEMA = {
   GUESTLIST_TABLE: `
     CREATE TABLE IF NOT EXISTS guestlist (
       guest_id TEXT PRIMARY KEY,
-      name TEXT NOT NULL COLLATE NOCASE,
       english_name TEXT COLLATE NOCASE,
       khmer_name TEXT,
       amount_khr DECIMAL(12,2) DEFAULT 0,

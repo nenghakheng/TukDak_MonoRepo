@@ -374,7 +374,7 @@ describe('GuestService', () => {
     });
 
     it('should validate guest ID', async () => {
-      await expect(service.updateGuest('', { name: 'Test' }))
+      await expect(service.updateGuest('', { english_name: 'Test' }))
         .rejects.toThrow('Valid guest ID is required');
     });
 
@@ -402,7 +402,7 @@ describe('GuestService', () => {
     });
 
     it('should validate empty name', async () => {
-      await expect(service.updateGuest('TEST001', { name: '' }))
+      await expect(service.updateGuest('TEST001', { english_name: '', khmer_name: '' }))
         .rejects.toThrow('Validation failed');
     });
 

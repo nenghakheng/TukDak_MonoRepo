@@ -147,10 +147,9 @@ export class GuestController extends BaseController {
         'application/json': {
           schema: {
             type: 'object',
-            required: ['guest_id', 'name', 'guest_of'],
+            required: ['guest_id', 'english_name', 'khmer_name', 'guest_of'],
             properties: {
               guest_id: { type: 'string', minLength: 1 },
-              name: { type: 'string', minLength: 1 },
               english_name: { type: 'string' },
               khmer_name: { type: 'string' },
               amount_khr: { type: 'number', minimum: 0 },

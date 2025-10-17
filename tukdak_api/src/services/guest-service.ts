@@ -184,7 +184,10 @@ export class GuestService {
       details.push({ field: 'guest_id', message: 'Guest ID is required', code: 'REQUIRED' });
     }
     if (typeof data.english_name !== 'string' || data.english_name.trim().length === 0) {
-      details.push({ field: 'name', message: 'Name is required', code: 'REQUIRED' });
+      details.push({ field: 'english_name', message: 'English Name is required', code: 'REQUIRED' });
+    }
+    if (typeof data.khmer_name !== 'string' || data.khmer_name.trim().length === 0) {
+      details.push({ field: 'khmer_name', message: 'Khmer Name is required', code: 'REQUIRED' });
     }
     if (!data.guest_of || !['Bride', 'Groom', 'Bride_Parents', 'Groom_Parents'].includes(data.guest_of)) {
       // Keep generic for invalid value
@@ -226,7 +229,7 @@ export class GuestService {
   }
 
   private validateUpdateGuestData(updates: UpdateGuestRequest): void {
-    const allowedFields = ['name', 'english_name', 'khmer_name', 'amount_khr', 'amount_usd', 'payment_method', 'guest_of', 'is_duplicate'];
+    const allowedFields = ['english_name', 'khmer_name', 'amount_khr', 'amount_usd', 'payment_method', 'guest_of', 'is_duplicate'];
     const providedFields = Object.keys(updates);
     
     if (providedFields.length === 0) {
@@ -242,8 +245,12 @@ export class GuestService {
     // Collect details for certain validations to match tests
     const details: { field: string; message: string; value?: any; code?: string }[] = [];
 
-    if (updates.name !== undefined && (typeof updates.name !== 'string' || updates.name.trim().length === 0)) {
-      details.push({ field: 'name', message: 'Name must be a non-empty string', code: 'INVALID_TYPE' });
+    if (updates.english_name !== undefined && (typeof updates.english_name !== 'string' || updates.english_name.trim().length === 0)) {
+      details.push({ field: 'English name', message: ' English Name must be a non-empty string', code: 'INVALID_TYPE' });
+    }
+
+    if (updates.khmer_name !== undefined && (typeof updates.khmer_name !== 'string' || updates.khmer_name.trim().length === 0)) {
+      details.push({ field: 'Khmer name', message: ' Khmer Name must be a non-empty string', code: 'INVALID_TYPE' });
     }
     if (updates.amount_khr !== undefined) {
       if (typeof updates.amount_khr !== 'number') {

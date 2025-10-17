@@ -5,7 +5,6 @@
 -- Create guestlist table
 CREATE TABLE IF NOT EXISTS guestlist (
   guest_id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
   amount_khr INTEGER DEFAULT 0,
   amount_usd INTEGER DEFAULT 0,
   payment_method TEXT CHECK (payment_method IN ('QR_Code', 'Cash')) NULL,

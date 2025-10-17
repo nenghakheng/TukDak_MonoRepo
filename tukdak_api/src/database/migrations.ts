@@ -56,7 +56,6 @@ ALTER TABLE guestlist ADD COLUMN khmer_name TEXT;
 
 -- Add indexes for search performance
 CREATE INDEX IF NOT EXISTS idx_guestlist_guest_id_lower ON guestlist (LOWER(guest_id));
-CREATE INDEX IF NOT EXISTS idx_guestlist_name_lower ON guestlist (LOWER(name));
 CREATE INDEX IF NOT EXISTS idx_guestlist_english_name_lower ON guestlist (LOWER(english_name));
 CREATE INDEX IF NOT EXISTS idx_guestlist_khmer_name_lower ON guestlist (LOWER(khmer_name));
 CREATE INDEX IF NOT EXISTS idx_guestlist_is_duplicate ON guestlist (is_duplicate);
