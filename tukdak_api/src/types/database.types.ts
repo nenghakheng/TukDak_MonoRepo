@@ -3,7 +3,7 @@ export interface Guest {
   name: string;
   amount_khr: number;
   amount_usd: number;
-  payment_method?: 'QR_Code' | 'Cash';
+  payment_method: 'QR_Code' | 'Cash' | null;
   guest_of: 'Bride' | 'Groom' | 'Bride_Parents' | 'Groom_Parents';
   is_duplicate: boolean;
   created_at?: string;
@@ -33,4 +33,17 @@ export interface ErrorLog {
   ip_address?: string;
   timestamp?: string;
   resolved: boolean;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: {
+    statusCode: number;
+    name: string;
+    message: string;
+    details?: any[];
+    timestamp: string;
+    path?: string;
+  };
 }
