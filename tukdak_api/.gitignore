@@ -65,3 +65,19 @@ typings/
 
 # Emacs auto-save file
 \#*#
+
+# Database files and data directory
+/data
+*.db
+*.sqlite
+*.sqlite3
+
+# Database backups
+*.db.backup
+*.sqlite.backup
+*-backup-*.db
+
+# Database logs
+*.db-journal
+*.db-wal
+*.db-shm

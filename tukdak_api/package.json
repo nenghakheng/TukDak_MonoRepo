@@ -34,7 +34,12 @@
     "prestart": "yarn run rebuild",
     "start": "node -r source-map-support/register .",
     "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
-    "rebuild": "yarn run clean && yarn run build"
+    "rebuild": "yarn run clean && yarn run build",
+    "db:init": "npm run build && node dist/scripts/init-db.js",
+    "db:reset": "rm -f data/tukdak.db && npm run db:init",
+    "db:backup": "cp data/tukdak.db data/wedding-backup-$(date +%Y%m%d-%H%M%S).db",
+    "db:health": "npm run build && node -e \"require('./dist/database/database.service').DatabaseService.getInstance().healthCheck().then(console.log)\"",
+    "start:dev": "npm run build:watch & nodemon --delay 1 dist/index.js"
   },
   "repository": {
     "type": "git",
