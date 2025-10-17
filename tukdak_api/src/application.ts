@@ -9,6 +9,7 @@ import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
+import { ErrorHandlingSequence } from './sequence/error-handling-sequence';
 
 export {ApplicationConfig};
 
@@ -19,7 +20,8 @@ export class TukdakApiApplication extends BootMixin(
     super(options);
 
     // Set up the custom sequence
-    this.sequence(MySequence);
+    // this.sequence(MySequence);
+    this.sequence(ErrorHandlingSequence);
 
     // Set up default home page
     this.static('/', path.join(__dirname, '../public'));
