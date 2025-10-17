@@ -3,7 +3,8 @@ import { CreateGuestRequest } from '../types/guest.types';
 
 export const mockGuest: Guest = {
   guest_id: 'TEST001',
-  name: 'Test Guest',
+  english_name: undefined,
+  khmer_name: undefined,
   amount_khr: 500000,
   amount_usd: 125,
   payment_method: 'QR_Code',
@@ -62,13 +63,15 @@ export const createMockRepository = (): MockGuestRepository => ({
 
 export const validCreateRequest: CreateGuestRequest = {
   guest_id: 'TEST001',
-  name: 'Test Guest',
+  english_name: 'Test',
+  khmer_name: 'តេស្ត',
   guest_of: 'Bride',
 };
 
 export const validCreateRequestWithPayment: CreateGuestRequest = {
   guest_id: 'TEST001',
-  name: 'Test Guest',
+  english_name: 'Test',
+  khmer_name: 'តេស្ត',
   amount_khr: 500000,
   amount_usd: 125,
   payment_method: 'QR_Code',

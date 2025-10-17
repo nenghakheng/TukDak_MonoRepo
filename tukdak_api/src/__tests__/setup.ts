@@ -1,3 +1,6 @@
+// Jest types
+import 'jest';
+
 // Global test setup
 beforeEach(() => {
   jest.clearAllMocks();

@@ -1,6 +1,6 @@
 import {DatabaseService} from '../database/database.service';
-import {Guest, ActivityLog} from '../types/database.types';
-import {CreateGuestRequest, UpdateGuestRequest} from '../types/guest.types';
+import {Guest, ActivityLog, SearchResult} from '../types/database.types';
+import {CreateGuestRequest, SearchType, UpdateGuestRequest} from '../types/guest.types';
 import {ValidationError, NotFoundError, ConflictError} from '../errors/custom-errors';
 
 export class GuestRepository {
@@ -12,6 +12,219 @@ export class GuestRepository {
 
   private getDb() {
     return this.dbService.getConnection().getDatabase();
+  }
+
+  /**
+   * Search for guests - Updated to match test expectations
+   */
+  async searchGuests(
+    query: string, 
+    searchType: SearchType, 
+    limit: number = 50, 
+    offset: number = 0
+  ): Promise<SearchResult> {
+    const db = this.getDb();
+    const startTime = performance.now();
+    
+    try {
+      // Sanitize and validate input
+      const sanitizedQuery = this.sanitizeSearchQuery(query);
+      if (!sanitizedQuery || sanitizedQuery.length < 1) {
+        return {
+          guests: [],
+          total_count: 0,
+          search_time_ms: performance.now() - startTime,
+          query_used: sanitizedQuery,
+          search_type: searchType
+        };
+      }
+
+      let sqlQuery: string;
+      let params: any[];
+      let countQuery: string;
+      let countParams: any[];
+
+      switch (searchType) {
+        case 'guest_id':
+          // Exact match, case-insensitive for guest_id
+          sqlQuery = `
+            SELECT guest_id, name, english_name, khmer_name, amount_khr, amount_usd, 
+                   payment_method, guest_of, is_duplicate, created_at, updated_at
+            FROM guestlist 
+            WHERE LOWER(guest_id) = LOWER(?) 
+              AND is_duplicate = 0
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+          `;
+          params = [sanitizedQuery, limit, offset];
+          
+          countQuery = `
+            SELECT COUNT(*) as count 
+            FROM guestlist 
+            WHERE LOWER(guest_id) = LOWER(?) 
+              AND is_duplicate = 0
+          `;
+          countParams = [sanitizedQuery];
+          break;
+
+        case 'english_name':
+          // Partial match, case-insensitive for English names
+          sqlQuery = `
+            SELECT guest_id, name, english_name, khmer_name, amount_khr, amount_usd, 
+                   payment_method, guest_of, is_duplicate, created_at, updated_at
+            FROM guestlist 
+            WHERE (LOWER(name) LIKE LOWER(?) OR LOWER(english_name) LIKE LOWER(?))
+              AND is_duplicate = 0
+            ORDER BY 
+              CASE 
+                WHEN LOWER(name) = LOWER(?) THEN 1
+                WHEN LOWER(english_name) = LOWER(?) THEN 2
+                WHEN LOWER(name) LIKE LOWER(?) THEN 3
+                WHEN LOWER(english_name) LIKE LOWER(?) THEN 4
+                ELSE 5
+              END,
+              created_at DESC
+            LIMIT ? OFFSET ?
+          `;
+          const likePattern = `%${sanitizedQuery}%`;
+          params = [likePattern, likePattern, sanitizedQuery, sanitizedQuery, likePattern, likePattern, limit, offset];
+          
+          countQuery = `
+            SELECT COUNT(*) as count 
+            FROM guestlist 
+            WHERE (LOWER(name) LIKE LOWER(?) OR LOWER(english_name) LIKE LOWER(?))
+              AND is_duplicate = 0
+          `;
+          countParams = [likePattern, likePattern];
+          break;
+
+        case 'khmer_name':
+          // Partial match for Khmer names
+          sqlQuery = `
+            SELECT guest_id, name, english_name, khmer_name, amount_khr, amount_usd, 
+                   payment_method, guest_of, is_duplicate, created_at, updated_at
+            FROM guestlist 
+            WHERE (LOWER(name) LIKE LOWER(?) OR LOWER(khmer_name) LIKE LOWER(?))
+              AND is_duplicate = 0
+            ORDER BY 
+              CASE 
+                WHEN LOWER(khmer_name) = LOWER(?) THEN 1
+                WHEN LOWER(name) = LOWER(?) THEN 2
+                WHEN LOWER(khmer_name) LIKE LOWER(?) THEN 3
+                WHEN LOWER(name) LIKE LOWER(?) THEN 4
+                ELSE 5
+              END,
+              created_at DESC
+            LIMIT ? OFFSET ?
+          `;
+          const khmerLikePattern = `%${sanitizedQuery}%`;
+          params = [khmerLikePattern, khmerLikePattern, sanitizedQuery, sanitizedQuery, khmerLikePattern, khmerLikePattern, limit, offset];
+          
+          countQuery = `
+            SELECT COUNT(*) as count 
+            FROM guestlist 
+            WHERE (LOWER(name) LIKE LOWER(?) OR LOWER(khmer_name) LIKE LOWER(?))
+              AND is_duplicate = 0
+          `;
+          countParams = [khmerLikePattern, khmerLikePattern];
+          break;
+
+        default:
+          throw new ValidationError(`Invalid search type: ${searchType}`);
+      }
+
+      // Execute search query
+      const guests = db.prepare(sqlQuery).all(...params) as any[];
+      
+      // Get total count
+      const countResult = db.prepare(countQuery).get(...countParams) as { count: number };
+      const totalCount = countResult.count;
+
+      // Convert and normalize the guests to match Guest type
+      const normalizedGuests: Guest[] = guests.map(guest => ({
+        guest_id: guest.guest_id,
+        name: guest.name,
+        english_name: guest.english_name || null,
+        khmer_name: guest.khmer_name || null,
+        amount_khr: guest.amount_khr || 0,
+        amount_usd: guest.amount_usd || 0,
+        payment_method: guest.payment_method || null,
+        guest_of: guest.guest_of,
+        is_duplicate: Boolean(guest.is_duplicate),
+        created_at: guest.created_at || new Date().toISOString(),
+        updated_at: guest.updated_at || new Date().toISOString(),
+      }));
+
+      const searchTime = performance.now() - startTime;
+
+      // Log search activity
+      this.logSearchActivity(sanitizedQuery, searchType, totalCount, searchTime);
+
+      return {
+        guests: normalizedGuests,
+        total_count: totalCount,
+        search_time_ms: Math.round(searchTime * 100) / 100,
+        query_used: sanitizedQuery,
+        search_type: searchType
+      };
+      
+    } catch (error) {
+      this.logError('SEARCH_GUESTS_ERROR', error as Error, { 
+        query: query, 
+        searchType: searchType, 
+        limit: limit, 
+        offset: offset 
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Sanitize search query to prevent SQL injection and handle special characters
+   */
+  private sanitizeSearchQuery(query: string): string {
+    if (typeof query !== 'string') {
+      return '';
+    }
+
+    // Remove dangerous characters and normalize
+    let sanitized = query
+      .trim()
+      .replace(/['"`;\\]/g, '') // Remove SQL injection characters
+      .replace(/[%_]/g, '\\$&')  // Escape LIKE wildcards
+      .substring(0, 100);        // Limit query length
+
+    return sanitized;
+  }
+
+  /**
+   * Log search activity for analytics and monitoring
+   */
+  private logSearchActivity(query: string, searchType: SearchType, resultCount: number, searchTimeMs: number): void {
+    const db = this.getDb();
+    
+    try {
+      const insertActivity = db.prepare(`
+        INSERT INTO activity_logs (guest_id, action, details) 
+        VALUES (?, ?, ?)
+      `);
+
+      const searchDetails = JSON.stringify({
+        query: query,
+        search_type: searchType,
+        result_count: resultCount,
+        search_time_ms: searchTimeMs,
+        timestamp: new Date().toISOString()
+      });
+
+      insertActivity.run(
+        'SEARCH', // Use 'SEARCH' as guest_id for search activities
+        'searched',
+        `Search: ${searchType} - "${query}" - ${resultCount} results (${searchTimeMs.toFixed(2)}ms)`
+      );
+    } catch (error) {
+      console.error('Failed to log search activity:', error);
+    }
   }
 
   async createGuest(guestData: CreateGuestRequest): Promise<Guest> {
@@ -27,12 +240,13 @@ export class GuestRepository {
       // Convert CreateGuestRequest to Guest format with defaults
       const guestToInsert: Omit<Guest, 'created_at' | 'updated_at'> = {
         guest_id: guestData.guest_id,
-        name: guestData.name,
+        english_name: guestData.english_name,
+        khmer_name: guestData.khmer_name,
         amount_khr: guestData.amount_khr || 0,
         amount_usd: guestData.amount_usd || 0,
         payment_method: guestData.payment_method || null,
         guest_of: guestData.guest_of,
-        is_duplicate: guestData.is_duplicate || false
+        is_duplicate: false,
       };
 
       // Insert guest with timestamps
@@ -51,7 +265,8 @@ export class GuestRepository {
         // Insert guest
         const result = insertGuest.run(
           guestToInsert.guest_id,
-          guestToInsert.name,
+          guestToInsert.english_name,
+          guestToInsert.khmer_name,
           guestToInsert.amount_khr,
           guestToInsert.amount_usd,
           guestToInsert.payment_method,
@@ -63,7 +278,7 @@ export class GuestRepository {
         insertActivity.run(
           guestToInsert.guest_id,
           'created',
-          `Guest created: ${guestToInsert.name} (${guestToInsert.guest_of})`
+          `Guest created: ${guestToInsert.english_name} (${guestToInsert.guest_of})`
         );
 
         // If payment provided, log payment activity
@@ -92,7 +307,7 @@ export class GuestRepository {
     
     try {
       const guest = db.prepare(`
-        SELECT guest_id, name, amount_khr, amount_usd, payment_method, 
+        SELECT guest_id, khmer_name, english_name, amount_khr, amount_usd, payment_method, 
                guest_of, is_duplicate, created_at, updated_at
         FROM guestlist 
         WHERE guest_id = ?
@@ -126,7 +341,7 @@ export class GuestRepository {
     
     try {
       let query = `
-        SELECT guest_id, name, amount_khr, amount_usd, payment_method, 
+        SELECT guest_id, khmer_name, english_name, amount_khr, amount_usd, payment_method, 
                guest_of, is_duplicate, created_at, updated_at
         FROM guestlist 
         WHERE 1=1
@@ -287,7 +502,7 @@ export class GuestRepository {
           }
 
           // Log soft delete
-          insertActivity.run(guestId, 'deleted', `Guest soft deleted: ${existingGuest.name}`);
+          insertActivity.run(guestId, 'deleted', `Guest soft deleted: ${existingGuest.english_name}`);
         });
 
         transaction();
@@ -297,7 +512,7 @@ export class GuestRepository {
 
         const transaction = db.transaction(() => {
           // Log before deletion (activities will be cascade deleted)
-          insertActivity.run(guestId, 'deleted', `Guest hard deleted: ${existingGuest.name}`);
+          insertActivity.run(guestId, 'deleted', `Guest hard deleted: ${existingGuest.english_name}`);
           
           const result = hardDeleteGuest.run(guestId);
           

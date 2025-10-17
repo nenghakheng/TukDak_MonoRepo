@@ -1,9 +1,11 @@
 export const DATABASE_SCHEMA = {
-  // Guest list table - Updated for gift/money tracking
+  // Guest list table - Updated for gift/money tracking and search optimization
   GUESTLIST_TABLE: `
     CREATE TABLE IF NOT EXISTS guestlist (
       guest_id TEXT PRIMARY KEY,
       name TEXT NOT NULL COLLATE NOCASE,
+      english_name TEXT COLLATE NOCASE,
+      khmer_name TEXT,
       amount_khr DECIMAL(12,2) DEFAULT 0,
       amount_usd DECIMAL(10,2) DEFAULT 0,
       payment_method TEXT CHECK(payment_method IN ('QR_Code', 'Cash')),
@@ -19,7 +21,7 @@ export const DATABASE_SCHEMA = {
     CREATE TABLE IF NOT EXISTS activity_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       guest_id TEXT NOT NULL,
-      action TEXT NOT NULL CHECK (action IN ('created', 'updated', 'deleted', 'payment_received', 'duplicate_marked', 'duplicate_resolved')),
+      action TEXT NOT NULL CHECK (action IN ('created', 'updated', 'deleted', 'payment_received', 'duplicate_marked', 'duplicate_resolved', 'searched')),
       old_amount_khr DECIMAL(12,2),
       new_amount_khr DECIMAL(12,2),
       old_amount_usd DECIMAL(10,2),
@@ -46,15 +48,29 @@ export const DATABASE_SCHEMA = {
     )
   `,
 
-  // Indexes for performance - Updated for new schema
+  // Indexes for performance - Updated for search optimization
   INDEXES: [
     'CREATE INDEX IF NOT EXISTS idx_guestlist_name ON guestlist(name)',
+    'CREATE INDEX IF NOT EXISTS idx_guestlist_english_name ON guestlist(english_name)',
+    'CREATE INDEX IF NOT EXISTS idx_guestlist_khmer_name ON guestlist(khmer_name)',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_guest_of ON guestlist(guest_of)',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_payment_method ON guestlist(payment_method)',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_is_duplicate ON guestlist(is_duplicate)',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_amount_khr ON guestlist(amount_khr)',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_amount_usd ON guestlist(amount_usd)',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_created_at ON guestlist(created_at)',
+    
+    // Search optimization indexes
+    'CREATE INDEX IF NOT EXISTS idx_guestlist_guest_id_lower ON guestlist(LOWER(guest_id))',
+    'CREATE INDEX IF NOT EXISTS idx_guestlist_name_lower ON guestlist(LOWER(name))',
+    'CREATE INDEX IF NOT EXISTS idx_guestlist_english_name_lower ON guestlist(LOWER(english_name))',
+    'CREATE INDEX IF NOT EXISTS idx_guestlist_khmer_name_lower ON guestlist(LOWER(khmer_name))',
+    
+    // Composite indexes for common search patterns
+    'CREATE INDEX IF NOT EXISTS idx_guestlist_search_active ON guestlist(is_duplicate, created_at) WHERE is_duplicate = 0',
+    'CREATE INDEX IF NOT EXISTS idx_guestlist_guest_of_active ON guestlist(guest_of, is_duplicate) WHERE is_duplicate = 0',
+    
+    // Activity and error log indexes
     'CREATE INDEX IF NOT EXISTS idx_activity_logs_guest_id ON activity_logs(guest_id)',
     'CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp ON activity_logs(timestamp)',
     'CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action)',
@@ -74,12 +90,12 @@ export const DATABASE_SCHEMA = {
     `CREATE TRIGGER IF NOT EXISTS log_guestlist_changes 
      AFTER UPDATE ON guestlist
      FOR EACH ROW
-     WHEN OLD.amount_khr != NEW.amount_khr OR OLD.amount_usd != NEW.amount_usd
+     WHEN OLD.amount_khr != NEW.amount_khr OR OLD.amount_usd != NEW.amount_usd OR 
+          OLD.english_name != NEW.english_name OR OLD.khmer_name != NEW.khmer_name
      BEGIN
        INSERT INTO activity_logs (guest_id, action, old_amount_khr, new_amount_khr, old_amount_usd, new_amount_usd, details)
        VALUES (NEW.guest_id, 'updated', OLD.amount_khr, NEW.amount_khr, OLD.amount_usd, NEW.amount_usd, 
-               'Amount changed from KHR:' || OLD.amount_khr || '/USD:' || OLD.amount_usd || 
-               ' to KHR:' || NEW.amount_khr || '/USD:' || NEW.amount_usd);
+               'Guest information updated');
      END`,
   ],
 };

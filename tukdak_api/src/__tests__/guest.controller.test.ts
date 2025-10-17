@@ -1,10 +1,205 @@
+/// <reference types="jest" />
 import { GuestService } from '../services/guest-service';
 import { GuestRepository } from '../repositories/guest-repository';
 import { ValidationError, NotFoundError } from '../errors/custom-errors';
 import { mockGuest, createMockRepository, validCreateRequest, validCreateRequestWithPayment } from './test-helpers';
+import { SearchType } from '../types/database.types';
 
 // Mock repository
 jest.mock('../repositories/guest-repository');
+
+describe('GuestService - Search Functionality', () => {
+  let service: GuestService;
+  let mockRepo: jest.Mocked<GuestRepository>;
+
+  const mockSearchResult = {
+    guests: [
+      {
+        guest_id: 'WED001',
+        english_name: 'John Doe',
+        khmer_name: 'ជន ដូ',
+        amount_khr: 500000,
+        amount_usd: 125,
+        payment_method: 'QR_Code' as const,
+        guest_of: 'Bride' as const,
+        is_duplicate: false,
+        created_at: '2024-01-01T00:00:00.000Z',
+        updated_at: '2024-01-01T00:00:00.000Z',
+      }
+    ],
+    total_count: 1,
+    search_time_ms: 15.5,
+    query_used: 'john',
+    search_type: 'english_name' as SearchType
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const repo = {
+      searchGuests: jest.fn(),
+    } as unknown as jest.Mocked<GuestRepository>;
+    
+    (GuestRepository as jest.MockedClass<typeof GuestRepository>).mockImplementation(() => repo);
+    service = new GuestService();
+    mockRepo = (service as unknown as { guestRepository: jest.Mocked<GuestRepository> }).guestRepository;
+  });
+
+  describe('searchGuests', () => {
+    it('should search guests successfully', async () => {
+      mockRepo.searchGuests.mockResolvedValue(mockSearchResult);
+
+      const result = await service.searchGuests({
+        query: 'john',
+        searchType: 'english_name'
+      });
+
+      expect(mockRepo.searchGuests).toHaveBeenCalledWith('john', 'english_name', 50, 0);
+      expect(result).toEqual(mockSearchResult);
+    });
+
+    it('should validate search query is required', async () => {
+      await expect(service.searchGuests({
+        query: '',
+        searchType: 'english_name'
+      })).rejects.toThrow('Validation failed');
+    });
+
+    it('should validate search query is string', async () => {
+      await expect(service.searchGuests({
+        query: null as unknown as string,
+        searchType: 'english_name'
+      })).rejects.toThrow('Validation failed');
+    });
+
+    it('should validate search query length', async () => {
+      const longQuery = 'a'.repeat(101);
+      await expect(service.searchGuests({
+        query: longQuery,
+        searchType: 'english_name'
+      })).rejects.toThrow('Validation failed');
+    });
+
+    it('should validate search type', async () => {
+      await expect(service.searchGuests({
+        query: 'john',
+        searchType: 'invalid_type' as SearchType
+      })).rejects.toThrow('Validation failed');
+    });
+
+    it('should validate limit parameter', async () => {
+      await expect(service.searchGuests({
+        query: 'john',
+        searchType: 'english_name',
+        limit: 0
+      })).rejects.toThrow('Validation failed');
+
+      await expect(service.searchGuests({
+        query: 'john',
+        searchType: 'english_name',
+        limit: 101
+      })).rejects.toThrow('Validation failed');
+    });
+
+    it('should validate offset parameter', async () => {
+      await expect(service.searchGuests({
+        query: 'john',
+        searchType: 'english_name',
+        offset: -1
+      })).rejects.toThrow('Validation failed');
+    });
+
+    it('should warn about slow search performance', async () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const slowResult = { ...mockSearchResult, search_time_ms: 250 };
+      mockRepo.searchGuests.mockResolvedValue(slowResult);
+
+      await service.searchGuests({
+        query: 'john',
+        searchType: 'english_name'
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Search performance warning: 250ms')
+      );
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('quickSearch', () => {
+    it('should perform quick search', async () => {
+      mockRepo.searchGuests.mockResolvedValue(mockSearchResult);
+
+      const result = await service.quickSearch('john', 'english_name');
+
+      expect(mockRepo.searchGuests).toHaveBeenCalledWith('john', 'english_name', 20, 0);
+      expect(result).toEqual(mockSearchResult.guests);
+    });
+  });
+
+  describe('search types', () => {
+    it('should support guest_id search', async () => {
+      const guestIdResult = { ...mockSearchResult, search_type: 'guest_id' as SearchType };
+      mockRepo.searchGuests.mockResolvedValue(guestIdResult);
+
+      await service.searchGuests({
+        query: 'WED001',
+        searchType: 'guest_id'
+      });
+
+      expect(mockRepo.searchGuests).toHaveBeenCalledWith('WED001', 'guest_id', 50, 0);
+    });
+
+    it('should support english_name search', async () => {
+      mockRepo.searchGuests.mockResolvedValue(mockSearchResult);
+
+      await service.searchGuests({
+        query: 'john',
+        searchType: 'english_name'
+      });
+
+      expect(mockRepo.searchGuests).toHaveBeenCalledWith('john', 'english_name', 50, 0);
+    });
+
+    it('should support khmer_name search', async () => {
+      const khmerResult = { ...mockSearchResult, search_type: 'khmer_name' as SearchType };
+      mockRepo.searchGuests.mockResolvedValue(khmerResult);
+
+      await service.searchGuests({
+        query: 'ជន',
+        searchType: 'khmer_name'
+      });
+
+      expect(mockRepo.searchGuests).toHaveBeenCalledWith('ជន', 'khmer_name', 50, 0);
+    });
+  });
+
+  describe('pagination', () => {
+    it('should handle pagination parameters', async () => {
+      mockRepo.searchGuests.mockResolvedValue(mockSearchResult);
+
+      await service.searchGuests({
+        query: 'john',
+        searchType: 'english_name',
+        limit: 10,
+        offset: 20
+      });
+
+      expect(mockRepo.searchGuests).toHaveBeenCalledWith('john', 'english_name', 10, 20);
+    });
+
+    it('should use default pagination values', async () => {
+      mockRepo.searchGuests.mockResolvedValue(mockSearchResult);
+
+      await service.searchGuests({
+        query: 'john',
+        searchType: 'english_name'
+      });
+
+      expect(mockRepo.searchGuests).toHaveBeenCalledWith('john', 'english_name', 50, 0);
+    });
+  });
+});
 
 describe('GuestService', () => {
   let service: GuestService;
@@ -41,7 +236,7 @@ describe('GuestService', () => {
       try {
         await service.createGuest({
           guest_id: '',
-          name: 'Test',
+          english_name: 'Test',
           guest_of: 'Bride'
         });
         fail('Should have thrown ValidationError');
@@ -63,7 +258,8 @@ describe('GuestService', () => {
     it('should validate required fields - empty name', async () => {
       await expect(service.createGuest({
         guest_id: 'TEST001',
-        name: '',
+        english_name: '',
+        khmer_name: '',
         guest_of: 'Bride'
       })).rejects.toThrow('Validation failed');
     });
@@ -71,7 +267,8 @@ describe('GuestService', () => {
     it('should validate required fields - invalid guest_of', async () => {
       await expect(service.createGuest({
         guest_id: 'TEST001',
-        name: 'Test',
+        english_name: 'Test',
+        khmer_name: 'តេស្ត',
         guest_of: 'InvalidValue' as any
       })).rejects.toThrow('Validation failed');
     });
@@ -79,7 +276,8 @@ describe('GuestService', () => {
     it('should validate payment method when amount provided', async () => {
       await expect(service.createGuest({
         guest_id: 'TEST001',
-        name: 'Test',
+        english_name: 'Test',
+        khmer_name: 'តេស្ត',
         guest_of: 'Bride',
         amount_khr: 100000
         // missing payment_method
@@ -89,7 +287,8 @@ describe('GuestService', () => {
     it('should validate negative amounts - KHR', async () => {
       await expect(service.createGuest({
         guest_id: 'TEST001',
-        name: 'Test',
+        english_name: 'Test',
+        khmer_name: 'តេស្ត',
         guest_of: 'Bride',
         amount_khr: -100
       })).rejects.toThrow('KHR amount cannot be negative');
@@ -98,7 +297,8 @@ describe('GuestService', () => {
     it('should validate negative amounts - USD', async () => {
       await expect(service.createGuest({
         guest_id: 'TEST001',
-        name: 'Test',
+        english_name: 'Test',
+        khmer_name: 'តេស្ត',
         guest_of: 'Bride',
         amount_usd: -50
       })).rejects.toThrow('USD amount cannot be negative');

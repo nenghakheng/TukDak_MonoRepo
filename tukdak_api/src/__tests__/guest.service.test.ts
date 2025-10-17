@@ -20,7 +20,8 @@ describe('GuestService', () => {
     it('should validate required fields', async () => {
       await expect(service.createGuest({
         guest_id: '',
-        name: 'Test',
+        english_name: 'Test',
+        khmer_name: 'ពិសី',
         guest_of: 'Bride'
       })).rejects.toThrow(ValidationError);
     });
@@ -28,7 +29,8 @@ describe('GuestService', () => {
     it('should validate payment method when amount provided', async () => {
       await expect(service.createGuest({
         guest_id: 'TEST001',
-        name: 'Test',
+        english_name: 'Test',
+        khmer_name: 'សីហា',
         guest_of: 'Bride',
         amount_khr: 100000
         // missing payment_method
@@ -40,7 +42,8 @@ describe('GuestService', () => {
 
       const result = await service.createGuest({
         guest_id: 'TEST001',
-        name: 'Test Guest',
+        english_name: 'Test Guest',
+        khmer_name: 'នេន និង',
         guest_of: 'Bride'
       });
 

@@ -48,8 +48,8 @@ async function initializeDatabase() {
 async function insertSampleData(db: any) {
   const insertGuest = db.prepare(`
     INSERT INTO guestlist 
-    (guest_id, name, amount_khr, amount_usd, payment_method, guest_of, is_duplicate) 
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    (guest_id, name, english_name, khmer_name, amount_khr, amount_usd, payment_method, guest_of, is_duplicate) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertActivity = db.prepare(`
@@ -57,34 +57,36 @@ async function insertSampleData(db: any) {
     VALUES (?, ?, ?)
   `);
 
-  // Fixed: Convert boolean to integer (0 for false, 1 for true)
+  // Enhanced sample data with proper English and Khmer names
   const sampleGuests = [
-    ['G001', 'Sok Pisey', 500000.00, 125.00, 'QR_Code', 'Bride', 0],        // 0 = false
-    ['G002', 'Chan Dara', 200000.00, 50.00, 'Cash', 'Groom', 0],            // 0 = false
-    ['G003', 'Lim Sophea', 1000000.00, 250.00, 'QR_Code', 'Bride_Parents', 0], // 0 = false
-    ['G004', 'Pov Samnang', 300000.00, 75.00, 'Cash', 'Groom_Parents', 0],  // 0 = false
-    ['G005', 'Keo Malika', 400000.00, 100.00, 'QR_Code', 'Bride', 0],       // 0 = false
-    ['G006', 'Heng Rithea', 0.00, 0.00, 'QR_Code', 'Groom', 0],                  // 0 = false
-    // Add a duplicate example
-    ['G007', 'Sok Pisey', 300000.00, 75.00, 'Cash', 'Bride', 1],            // 1 = true (duplicate)
+    ['G001', 'Sok Pisey', 'Sok Pisey', 'សុខ ពិសី', 500000.00, 125.00, 'QR_Code', 'Bride', 0],
+    ['G002', 'Chan Dara', 'Chan Dara', 'ច័ន្ទ ដារា', 200000.00, 50.00, 'Cash', 'Groom', 0],
+    ['G003', 'Lim Sophea', 'Lim Sophea', 'លឹម សុភា', 1000000.00, 250.00, 'QR_Code', 'Bride_Parents', 0],
+    ['G004', 'Pov Samnang', 'Pov Samnang', 'ពៅ សំណាង', 300000.00, 75.00, 'Cash', 'Groom_Parents', 0],
+    ['G005', 'Keo Malika', 'Keo Malika', 'កែវ ម៉ាលីកា', 400000.00, 100.00, 'QR_Code', 'Bride', 0],
+    ['G006', 'Heng Rithea', 'Heng Rithea', 'ហេង រិទ្ធា', 0.00, 0.00, null, 'Groom', 0],
+    ['G007', 'Sok Pisey Duplicate', 'Sok Pisey', 'សុខ ពិសី', 300000.00, 75.00, 'Cash', 'Bride', 1],
+    ['G008', 'John Smith', 'John Smith', 'ចន ស្មីត', 200000.00, 50.00, 'QR_Code', 'Groom', 0],
+    ['G009', 'Mary Johnson', 'Mary Johnson', 'ម៉ារី ចនសុន', 150000.00, 37.50, 'Cash', 'Bride', 0],
+    ['G010', 'David Wilson', 'David Wilson', 'ដាវីត វីលសុន', 0.00, 0.00, null, 'Groom_Parents', 0],
   ];
 
   const transaction = db.transaction(() => {
     sampleGuests.forEach((guest) => {
       try {
         const result = insertGuest.run(...guest);
-        const guestId = guest[0] as string; // guest_id is the first element
+        const guestId = guest[0] as string;
         
         // Log the creation
         insertActivity.run(guestId, 'created', 'Sample guest created during initialization');
         
         // If they have given money, log the payment
-        const amountKhr = guest[2] as number;
-        const amountUsd = guest[3] as number;
-        const isDuplicate = guest[6] as number; // 0 or 1
+        const amountKhr = guest[4] as number;
+        const amountUsd = guest[5] as number;
+        const isDuplicate = guest[8] as number;
+        const paymentMethod = guest[6] as string | null;
         
         if (amountKhr > 0 || amountUsd > 0) {
-          const paymentMethod = guest[4] as string;
           insertActivity.run(
             guestId, 
             'payment_received', 
@@ -124,17 +126,6 @@ async function insertSampleData(db: any) {
   `).get();
   
   console.log('📊 Sample data summary:', summary);
-  
-  // Show individual guests
-  const guests = db.prepare(`
-    SELECT guest_id, name, amount_khr, amount_usd, payment_method, guest_of, 
-           CASE WHEN is_duplicate = 1 THEN 'Yes' ELSE 'No' END as is_duplicate
-    FROM guestlist 
-    ORDER BY guest_id
-  `).all();
-  
-  console.log('👥 Inserted guests:');
-  console.table(guests);
 }
 
 // Run if called directly

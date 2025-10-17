@@ -29,7 +29,6 @@
     "docker:build": "docker build -t tukdak_api .",
     "docker:run": "docker run -p 3000:3000 -d tukdak_api",
     "premigrate": "yarn run build",
-    "migrate": "node ./dist/migrate",
     "preopenapi-spec": "yarn run build",
     "openapi-spec": "node ./dist/openapi-spec",
     "prestart": "yarn run rebuild",
@@ -40,7 +39,11 @@
     "db:reset": "rm -f data/tukdak.db && npm run db:init",
     "db:backup": "cp data/tukdak.db data/wedding-backup-$(date +%Y%m%d-%H%M%S).db",
     "db:health": "npm run build && node -e \"require('./dist/database/database.service').DatabaseService.getInstance().healthCheck().then(console.log)\"",
-    "start:dev": "npm run build:watch & nodemon --delay 1 dist/index.js"
+    "db:setup": "npm run migrate",
+    "start:dev": "npm run build:watch & nodemon --delay 1 dist/index.js",
+    "migrate": "npx ts-node src/database/migrations.ts up",
+    "migrate:rollback": "npx ts-node src/database/migrations.ts rollback",
+    "migrate:build": "npm run build && node dist/database/migrations.js up"
   },
   "eslintConfig": {
     "overrides": [
@@ -69,46 +72,6 @@
     "src",
     "!*/__tests__"
   ],
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/src"
-    ],
-    "testMatch": [
-      "**/__tests__/**/*.test.ts"
-    ],
-    "collectCoverageFrom": [
-      "src/services/**/*.ts",
-      "src/controllers/**/*.ts",
-      "src/repositories/**/*.ts",
-      "!src/**/*.d.ts",
-      "!src/__tests__/**",
-      "!src/scripts/**"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 80,
-        "functions": 85,
-        "lines": 85,
-        "statements": 85
-      }
-    },
-    "setupFilesAfterEnv": [
-      "<rootDir>/src/__tests__/setup.ts"
-    ],
-    "transform": {
-      "^.+\\.ts$": "ts-jest"
-    },
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json",
-      "node"
-    ]
-  },
   "dependencies": {
     "@loopback/boot": "^8.0.5",
     "@loopback/core": "^7.0.4",
@@ -124,12 +87,13 @@
     "@loopback/build": "^12.0.4",
     "@loopback/eslint-config": "^16.0.1",
     "@loopback/testlab": "^8.0.4",
+    "@types/jest": "^29.5.14",
     "@types/node": "^16.18.126",
     "eslint": "^8.57.1",
-    "source-map-support": "^0.5.21",
-    "typescript": "~5.2.2",
-    "@types/jest": "^29.5.0",
     "jest": "^29.5.0",
-    "ts-jest": "^29.1.0"
+    "source-map-support": "^0.5.21",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.2.2"
   }
 }
