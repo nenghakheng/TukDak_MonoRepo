@@ -17,7 +17,8 @@ import {
   SearchType, 
   UpdateGuestRequest,
   Guest,
-  GuestStatistics
+  GuestStatistics,
+  CheckInGuestRequest
 } from '../types/guest.types';
 
 // Helper function to convert TypeScript types to JSON Schema
@@ -272,6 +273,52 @@ export class GuestController extends BaseController {
     const guest = await this.guestService.updateGuest(guestId, updates);
     return this.success(guest);
   }
+
+  /**
+   * Check-in guest method
+   */
+  @patch('/guests/{guestId}/check-in')
+  @response(200, {
+    description: 'Update guest information',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: createSchemaFromType(GUEST_RESPONSE_EXAMPLE)
+          },
+          required: ['success', 'data']
+        }
+      }
+    }
+  }) async checkInGuest(
+    @param.path.string('guestId') guestId: string,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              amount_khr: { type: 'number', minimum: 0 },
+              amount_usd: { type: 'number', minimum: 0 },
+              payment_method: { 
+                oneOf: [
+                  { type: 'string', enum: ['QR_Code', 'Cash'] },
+                  { type: 'null' }
+                ]
+              },
+            },
+            additionalProperties: false
+          }
+        }
+      }
+    })
+    updates: CheckInGuestRequest
+  ) {
+    const checkedInGuest = await this.guestService.checkInGuest(guestId, updates);
+    return this.success(checkedInGuest);
+  };
 
   @del('/guests/{guestId}')
   @response(200, {

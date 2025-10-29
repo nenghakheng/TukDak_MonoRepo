@@ -1,6 +1,6 @@
 import {DatabaseService} from '../database/database.service';
 import {Guest, ActivityLog, SearchResult} from '../types/database.types';
-import {CreateGuestRequest, SearchType, UpdateGuestRequest} from '../types/guest.types';
+import {CheckInGuestRequest, CreateGuestRequest, SearchType, UpdateGuestRequest} from '../types/guest.types';
 import {ValidationError, NotFoundError, ConflictError} from '../errors/custom-errors';
 
 export class GuestRepository {
@@ -465,6 +465,104 @@ export class GuestRepository {
         throw error;
       }
       this.logError('UPDATE_GUEST_ERROR', error as Error, {guest_id: guestId});
+      throw error;
+    }
+  }
+
+  /**
+   * Check-in guest with payment information
+   */
+  async checkInGuest(
+    guestId: string, 
+    paymentData: CheckInGuestRequest,
+  ): Promise<Guest> {
+    const db = this.getDb();
+    
+    try {
+      // Get current guest data
+      const currentGuest = await this.getGuestById(guestId);
+
+      // Validate payment data
+      if (!paymentData.payment_method) {
+        throw new ValidationError('Payment method is required for check-in');
+      }
+
+      if (!paymentData.amount_khr && !paymentData.amount_usd) {
+        throw new ValidationError('At least one payment amount (KHR or USD) is required');
+      }
+
+      if (paymentData.amount_khr !== undefined && paymentData.amount_khr < 0) {
+        throw new ValidationError('Amount KHR cannot be negative');
+      }
+
+      if (paymentData.amount_usd !== undefined && paymentData.amount_usd < 0) {
+        throw new ValidationError('Amount USD cannot be negative');
+      }
+
+      // Check if guest already checked in (has payment)
+      const alreadyCheckedIn = currentGuest.amount_khr > 0 || currentGuest.amount_usd > 0;
+      
+      const amount_khr = paymentData.amount_khr || 0;
+      const amount_usd = paymentData.amount_usd || 0;
+
+      // Update guest with payment information
+      const updateGuest = db.prepare(`
+        UPDATE guestlist 
+        SET amount_khr = ?,
+            amount_usd = ?,
+            payment_method = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE guest_id = ?
+      `);
+
+      const insertActivity = db.prepare(`
+        INSERT INTO activity_logs (guest_id, action, old_amount_khr, new_amount_khr, 
+                                old_amount_usd, new_amount_usd, details) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const transaction = db.transaction(() => {
+        const result = updateGuest.run(
+          amount_khr,
+          amount_usd,
+          paymentData.payment_method,
+          guestId
+        );
+        
+        if (result.changes === 0) {
+          throw new NotFoundError('Guest', guestId);
+        }
+
+        // Log check-in activity
+        const action = alreadyCheckedIn ? 'payment_updated' : 'checked_in';
+        const details = alreadyCheckedIn 
+          ? `Payment updated: ${amount_khr} KHR / ${amount_usd} USD via ${paymentData.payment_method}`
+          : `Guest checked in: ${amount_khr} KHR / ${amount_usd} USD via ${paymentData.payment_method}`;
+
+        insertActivity.run(
+          guestId,
+          action,
+          currentGuest.amount_khr,
+          amount_khr,
+          currentGuest.amount_usd,
+          amount_usd,
+          details
+        );
+      });
+
+      transaction();
+
+      // Return updated guest
+      return this.getGuestById(guestId);
+      
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof ValidationError) {
+        throw error;
+      }
+      this.logError('CHECK_IN_GUEST_ERROR', error as Error, {
+        guest_id: guestId,
+        payment_data: paymentData
+      });
       throw error;
     }
   }
