@@ -6,7 +6,8 @@ import {
   SearchGuestsRequest,
   GuestFilters,
   SearchType,
-  SearchResult
+  SearchResult,
+  CheckInGuestRequest
 } from '../types/guest.types';
 import { ValidationError, NotFoundError } from '../errors/custom-errors';
 
@@ -164,6 +165,15 @@ export class GuestService {
     return this.normalizeGuest(result);
   }
 
+  async checkInGuest(guestId: string, paymentData: CheckInGuestRequest): Promise<Guest> {
+    if (!guestId || typeof guestId !== 'string' || guestId.trim().length === 0) {
+      throw new ValidationError('Valid guest ID is required');
+    }
+    this.validateCheckedInGuestData(paymentData);
+    const result = await this.guestRepository.checkInGuest(guestId, paymentData);
+    return this.normalizeGuest(result);
+  }
+
   async deleteGuest(guestId: string, softDelete: boolean = true): Promise<boolean> {
     if (!guestId || typeof guestId !== 'string' || guestId.trim().length === 0) {
       throw new ValidationError('Valid guest ID is required');
@@ -277,6 +287,90 @@ export class GuestService {
     }
     if (updates.is_duplicate !== undefined && typeof updates.is_duplicate !== 'boolean') {
       throw new ValidationError('Validation failed');
+    }
+  }
+
+  private validateCheckedInGuestData(data: CheckInGuestRequest): void {
+    const errors: Array<{field: string; message: string; code: string; value?: any}> = [];
+
+    // Check if payment_method is provided (required for check-in)
+    if (data.payment_method === undefined) {
+      throw new ValidationError('Payment method is required for check-in');
+    }
+
+    // Validate payment_method value
+    if (data.payment_method === null) {
+      errors.push({
+        field: 'payment_method',
+        message: 'Payment method cannot be null',
+        code: 'INVALID_TYPE',
+        value: data.payment_method,
+      });
+    } else if (!['QR_Code', 'Cash'].includes(data.payment_method)) {
+      errors.push({
+        field: 'payment_method',
+        message: 'Payment method must be either QR_Code or Cash',
+        code: 'INVALID_TYPE',
+        value: data.payment_method,
+      });
+    }
+
+    // Validate amount_khr
+    if (data.amount_khr !== undefined) {
+      if (typeof data.amount_khr !== 'number') {
+        errors.push({
+          field: 'amount_khr',
+          message: 'Amount KHR must be a number',
+          code: 'INVALID_TYPE',
+          value: data.amount_khr,
+        });
+      } else if (data.amount_khr < 0) {
+        errors.push({
+          field: 'amount_khr',
+          message: 'Amount KHR must be non-negative',
+          code: 'INVALID_TYPE',
+          value: data.amount_khr,
+        });
+      }
+    }
+
+    // Validate amount_usd
+    if (data.amount_usd !== undefined) {
+      if (typeof data.amount_usd !== 'number') {
+        errors.push({
+          field: 'amount_usd',
+          message: 'Amount USD must be a number',
+          code: 'INVALID_TYPE',
+          value: data.amount_usd,
+        });
+      } else if (data.amount_usd < 0) {
+        errors.push({
+          field: 'amount_usd',
+          message: 'Amount USD must be non-negative',
+          code: 'INVALID_TYPE',
+          value: data.amount_usd,
+        });
+      }
+    }
+
+    // Check for non-allowed fields
+    const allowedFields = ['amount_khr', 'amount_usd', 'payment_method'];
+    const providedFields = Object.keys(data);
+    const invalidFields = providedFields.filter(field => !allowedFields.includes(field));
+
+    if (invalidFields.length > 0) {
+      invalidFields.forEach(field => {
+        errors.push({
+          field,
+          message: `Field '${field}' is not allowed for check-in`,
+          code: 'INVALID_FIELD',
+          value: (data as any)[field],
+        });
+      });
+    }
+
+    if (errors.length > 0) {
+      throw new ValidationError('Validation failed', errors);
     }
   }
 }
