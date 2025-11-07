@@ -33,6 +33,12 @@ export interface UpdateGuestRequest {
   is_duplicate?: boolean;
 }
 
+export interface CheckInGuestRequest {
+  amount_khr?: number;
+  amount_usd?: number;
+  payment_method?: 'QR_Code' | 'Cash';
+}
+
 // Search related types
 export type SearchType = 'guest_id' | 'english_name' | 'khmer_name';
 

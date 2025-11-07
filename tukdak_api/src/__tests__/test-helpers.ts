@@ -30,6 +30,7 @@ interface MockGuestService {
   getGuestById: jest.MockedFunction<(id: string) => Promise<Guest>>;
   getAllGuests: jest.MockedFunction<(filters?: unknown) => Promise<Guest[]>>;
   updateGuest: jest.MockedFunction<(id: string, updates: unknown) => Promise<Guest>>;
+  checkInGuest: jest.MockedFunction<(id: string, paymentData: unknown) => Promise<Guest>>;
   deleteGuest: jest.MockedFunction<(id: string, soft?: boolean) => Promise<boolean>>;
   getStatistics: jest.MockedFunction<() => Promise<unknown>>;
 }
@@ -39,6 +40,7 @@ export const createMockService = (): MockGuestService => ({
   getGuestById: jest.fn(),
   getAllGuests: jest.fn(),
   updateGuest: jest.fn(),
+  checkInGuest: jest.fn(),
   deleteGuest: jest.fn(),
   getStatistics: jest.fn(),
 });
@@ -48,6 +50,7 @@ interface MockGuestRepository {
   getGuestById: jest.MockedFunction<(id: string) => Promise<Guest>>;
   getAllGuests: jest.MockedFunction<(filters?: unknown) => Promise<Guest[]>>;
   updateGuest: jest.MockedFunction<(id: string, updates: unknown) => Promise<Guest>>;
+  checkInGuest: jest.MockedFunction<(id: string, paymentData: unknown) => Promise<Guest>>;
   deleteGuest: jest.MockedFunction<(id: string, soft?: boolean) => Promise<boolean>>;
   getGuestStatistics: jest.MockedFunction<() => Promise<unknown>>;
 }
@@ -57,6 +60,7 @@ export const createMockRepository = (): MockGuestRepository => ({
   getGuestById: jest.fn(),
   getAllGuests: jest.fn(),
   updateGuest: jest.fn(),
+  checkInGuest: jest.fn(),
   deleteGuest: jest.fn(),
   getGuestStatistics: jest.fn(),
 });
