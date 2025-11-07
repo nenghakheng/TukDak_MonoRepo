@@ -11,14 +11,6 @@ describe('GuestService - Check-in Functionality', () => {
   let service: GuestService;
   let mockRepo: jest.Mocked<GuestRepository>;
 
-  const mockCheckedInGuest = {
-    ...mockGuest,
-    amount_khr: 500000,
-    amount_usd: 125,
-    payment_method: 'QR_Code' as const,
-    updated_at: '2024-10-29T10:30:00.000Z',
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
     const repo = createMockRepository();
@@ -272,7 +264,7 @@ describe('GuestService - Check-in Functionality', () => {
 
       it('should validate payment method is one of allowed values', async () => {
         const invalidMethods = ['cash', 'qr_code', 'Bank', 'Credit', ''];
-        
+
         for (const method of invalidMethods) {
           const checkInData: any = {
             amount_khr: 500000,
