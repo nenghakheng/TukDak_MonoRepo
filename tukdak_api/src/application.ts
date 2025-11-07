@@ -21,11 +21,11 @@ export class TukdakApiApplication extends BootMixin(
 
     // Configure CORS
     this.configure('rest.cors').to({
-      origin: process.env.FRONTEND_URL ?? 'http://localhost:5175',
-      credentials: true,
+      origin: '*',
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
       allowedHeaders: 'Content-Type,Authorization,Accept',
       exposedHeaders: 'Content-Range,X-Content-Range',
+      credentials: true,
       maxAge: 86400,
     });
 
