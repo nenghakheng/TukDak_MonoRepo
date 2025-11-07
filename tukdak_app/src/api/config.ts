@@ -14,4 +14,5 @@ export const API_CONFIG = {
  */
 export const API_ENDPOINTS = {
   PING: '/ping',
-} as const;
+  GUESTS: '/guests',
+};

@@ -8,3 +8,9 @@ export type {
   ApiResponse,
   ApiError,
 } from './ping.model';
+
+export type {
+  Guest,
+  GuestResponse,
+  GuestsResponse,
+} from './guest.model';
