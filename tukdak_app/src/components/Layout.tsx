@@ -17,7 +17,7 @@ export const Layout = () => {
 
               {/* Navigation Links */}
               <div className="hidden sm:flex sm:space-x-8">
-                <NavLink
+                {/* <NavLink
                   to="/ping"
                   className={({ isActive }) =>
                     `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
@@ -28,7 +28,7 @@ export const Layout = () => {
                   }
                 >
                   API Test
-                </NavLink>
+                </NavLink> */}
                 <NavLink
                   to="/guests"
                   className={({ isActive }) =>

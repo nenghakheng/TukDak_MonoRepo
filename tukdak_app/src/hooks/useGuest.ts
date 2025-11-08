@@ -76,3 +76,27 @@ export const useDeleteGuestMutation = () => {
     },
   });
 };
+
+/**
+ * Check-in guest mutation
+ */
+export const useCheckInGuestMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      guest_id,
+      data,
+    }: {
+      guest_id: string;
+      data: {
+        amount_khr: number;
+        amount_usd: number;
+        payment_method: string;
+      };
+    }) => guestsApi.updateGuest(guest_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
+    },
+  });
+};

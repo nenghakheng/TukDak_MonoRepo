@@ -11,6 +11,12 @@ export interface Guest {
   updated_at: string;
 }
 
+export interface CheckInGuest {
+  amount_khr: number;
+  amount_usd: number;
+  payment_method: 'QR_Code' | 'Cash' | 'Bank_Transfer' | string | null;
+}
+
 export interface GuestsResponse {
   success: boolean;
   data: Guest[];
