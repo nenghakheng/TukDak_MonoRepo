@@ -326,6 +326,153 @@ export class GuestRepository {
     }
   }
 
+  /**
+   * Get guests with pagination and sorting
+   */
+  async getGuests(
+    page: number = 1,
+    limit: number = 50,
+    sortBy: string = 'created_at',
+    sortOrder: 'ASC' | 'DESC' = 'DESC',
+    filters?: {
+      guest_of?: string;
+      payment_method?: string;
+      has_payment?: boolean;
+      is_duplicate?: boolean;
+    }
+  ): Promise<{
+    data: Guest[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const db = this.getDb();
+    const startTime = performance.now();
+
+    try {
+      // Validate parameters
+      if (page < 1) {
+        throw new ValidationError('Page must be greater than 0');
+      }
+
+      if (limit < 1 || limit > 100) {
+        throw new ValidationError('Limit must be between 1 and 100');
+      }
+
+      // Whitelist allowed sort columns to prevent SQL injection
+      const allowedSortColumns = [
+        'guest_id',
+        'english_name',
+        'khmer_name',
+        'amount_khr',
+        'amount_usd',
+        'payment_method',
+        'guest_of',
+        'created_at',
+        'updated_at'
+      ];
+
+      if (!allowedSortColumns.includes(sortBy)) {
+        throw new ValidationError(`Invalid sort column. Allowed: ${allowedSortColumns.join(', ')}`);
+      }
+
+      // Validate sort order
+      if (sortOrder !== 'ASC' && sortOrder !== 'DESC') {
+        throw new ValidationError('Sort order must be ASC or DESC');
+      }
+
+      // Build query with filters
+      let query = `
+        SELECT guest_id, khmer_name, english_name, amount_khr, amount_usd, payment_method,
+              guest_of, is_duplicate, created_at, updated_at
+        FROM guestlist
+        WHERE 1=1
+      `;
+      const params: any[] = [];
+
+      // Apply filters
+      if (filters?.guest_of) {
+        query += ' AND guest_of = ?';
+        params.push(filters.guest_of);
+      }
+
+      if (filters?.payment_method) {
+        query += ' AND payment_method = ?';
+        params.push(filters.payment_method);
+      }
+
+      if (filters?.has_payment !== undefined) {
+        if (filters.has_payment) {
+          query += ' AND (amount_khr > 0 OR amount_usd > 0)';
+        } else {
+          query += ' AND (amount_khr = 0 AND amount_usd = 0)';
+        }
+      }
+
+      if (filters?.is_duplicate !== undefined) {
+        query += ' AND is_duplicate = ?';
+        params.push(filters.is_duplicate ? 1 : 0);
+      }
+
+      // Get total count before pagination
+      const countQuery = `SELECT COUNT(*) as total FROM (${query}) as filtered`;
+      const countResult = db.prepare(countQuery).get(...params) as { total: number };
+      const total = countResult.total;
+
+      // Add sorting and pagination
+      query += ` ORDER BY ${sortBy} ${sortOrder}`;
+
+      // Calculate offset
+      const offset = (page - 1) * limit;
+      query += ` LIMIT ? OFFSET ?`;
+      params.push(limit, offset);
+
+      // Execute query
+      const guests = db.prepare(query).all(...params) as Guest[];
+
+      // Convert integer back to boolean for is_duplicate
+      const normalizedGuests = guests.map(guest => ({
+        ...guest,
+        is_duplicate: Boolean(guest.is_duplicate)
+      }));
+
+      // Calculate total pages
+      const totalPages = Math.ceil(total / limit);
+
+      const queryTime = performance.now() - startTime;
+
+      // Log if query is slow (> 300ms)
+      if (queryTime > 300) {
+        console.warn(`Slow query detected: ${queryTime.toFixed(2)}ms for getGuests`, {
+          page,
+          limit,
+          sortBy,
+          sortOrder,
+          total
+        });
+      }
+
+      return {
+        data: normalizedGuests,
+        total,
+        page,
+        totalPages
+      };
+
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
+      this.logError('GET_GUESTS_ERROR', error as Error, {
+        page,
+        limit,
+        sortBy,
+        sortOrder
+      });
+      throw error;
+    }
+  }
+
   async getAllGuests(filters?: {
     guest_of?: string;
     payment_method?: string;
@@ -448,9 +595,9 @@ export class GuestRepository {
           guestId,
           'updated',
           updates.amount_khr !== undefined ? currentGuest.amount_khr : null,
-          updates.amount_khr !== undefined ? updates.amount_khr : null,
+          updates.amount_khr ?? null,
           updates.amount_usd !== undefined ? currentGuest.amount_usd : null,
-          updates.amount_usd !== undefined ? updates.amount_usd : null,
+          updates.amount_usd ?? null,
           `Guest updated: ${changedFields.join(', ')}`
         );
       });
@@ -458,7 +605,7 @@ export class GuestRepository {
       transaction();
 
       // Return updated guest
-      return this.getGuestById(guestId);
+      return await this.getGuestById(guestId);
 
     } catch (error) {
       if (error instanceof NotFoundError || error instanceof ValidationError) {

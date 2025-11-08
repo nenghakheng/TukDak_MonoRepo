@@ -4,8 +4,24 @@ import type { Guest } from '../models';
 
 const QUERY_KEYS = {
   guests: 'guests',
+  guestsPaginated: 'guests-paginated',
   guest: (id: string) => ['guest', id],
 };
+
+  /**
+   * Fetch paginated guests
+   */
+  export const useGuestsPaginatedQuery = (params?: { 
+    page?: number; 
+    limit?: number;
+    search?: string; 
+    guest_of?: string; 
+  }) => {
+    return useQuery({
+      queryKey: [QUERY_KEYS.guestsPaginated, params],
+      queryFn: () => guestsApi.getGuestsPaginated(params),
+    });
+  };
 
 /**
  * Fetch all guests

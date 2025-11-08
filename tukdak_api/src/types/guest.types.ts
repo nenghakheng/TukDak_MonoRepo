@@ -50,6 +50,26 @@ export interface SearchGuestsRequest {
   includeDuplicates?: boolean;
 }
 
+export interface PaginatedGuestsResponse {
+  data: Guest[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface GetGuestsOptions {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: {
+    guest_of?: string;
+    payment_method?: string;
+    has_payment?: boolean;
+    is_duplicate?: boolean;
+  };
+}
+
 // Filter interface
 export interface GuestFilters {
   guest_of?: 'Bride' | 'Groom' | 'Bride_Parents' | 'Groom_Parents';

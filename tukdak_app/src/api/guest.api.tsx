@@ -26,6 +26,22 @@ export const guestsApi = {
     limit?: number;
   }) => ApiService.get<GuestsResponse>(API_ENDPOINTS.GUESTS, { params }),
 
+  getGuestsPaginated: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    guest_of?: string;
+  }) =>
+    ApiService.get<{
+      success: boolean;
+      data: {
+        data: Guest[];
+        total: number;
+        page: number;
+        totalPages: number;
+      };
+    }>(`${API_ENDPOINTS.GUESTS}/paginated`, { params }),
+
   getGuest: (id: string) =>
     ApiService.get<GuestResponse>(`${API_ENDPOINTS.GUESTS}/${id}`),
 

@@ -1,38 +1,23 @@
-import { useState, useMemo } from "react";
-import { useGuestsQuery } from "../../hooks/useGuest";
+import { useState } from "react";
+import { useGuestsPaginatedQuery } from "../../hooks/useGuest";
 import { SearchBar } from "./SearchBar";
 import { GuestsTable } from "./GuestsTable";
 
 export const Guests = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [guestOfFilter, setGuestOfFilter] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { data, isLoading, error } = useGuestsQuery({
+  const { data, isLoading, error } = useGuestsPaginatedQuery({
+    page: currentPage,
+    limit: 10,
     search: searchTerm,
     guest_of: guestOfFilter,
   });
 
-  const filteredGuests = useMemo(() => {
-    if (!data?.data) return [];
-
-    let filtered = data.data;
-
-    if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (guest) =>
-          guest.guest_id.toLowerCase().includes(lowerSearch) ||
-          guest.english_name.toLowerCase().includes(lowerSearch) ||
-          guest.khmer_name.includes(searchTerm)
-      );
-    }
-
-    if (guestOfFilter) {
-      filtered = filtered.filter((guest) => guest.guest_of === guestOfFilter);
-    }
-
-    return filtered;
-  }, [data, searchTerm, guestOfFilter]);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,12 +29,18 @@ export const Guests = () => {
           </h1>
         </div>
 
-        {/* Apple-Inspired Search Bar */}
+        {/* Search Bar */}
         <SearchBar
           searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          onSearchChange={(value) => {
+            setSearchTerm(value);
+            setCurrentPage(1); // Reset to page 1 on search
+          }}
           guestOfFilter={guestOfFilter}
-          onGuestOfChange={setGuestOfFilter}
+          onGuestOfChange={(value) => {
+            setGuestOfFilter(value);
+            setCurrentPage(1); // Reset to page 1 on filter
+          }}
         />
 
         {/* Guests Table */}
@@ -64,9 +55,15 @@ export const Guests = () => {
                 Error loading guests: {(error as Error).message}
               </p>
             </div>
-          ) : (
-            <GuestsTable guests={filteredGuests} />
-          )}
+          ) : data?.data ? (
+            <GuestsTable
+              guests={data.data.data}
+              currentPage={data.data.page}
+              totalPages={data.data.totalPages}
+              totalGuests={data.data.total}
+              onPageChange={handlePageChange}
+            />
+          ) : null}
         </div>
       </div>
     </div>

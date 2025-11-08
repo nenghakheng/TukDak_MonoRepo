@@ -1,25 +1,22 @@
 import {
-  post,
-  get,
-  patch,
   del,
+  get,
   param,
+  patch,
+  post,
   requestBody,
-  response,
-  getModelSchemaRef,
+  response
 } from '@loopback/rest';
-import {BaseController} from './base/base-controller';
 import {GuestService} from '../services/guest-service';
-import { 
-  CreateGuestRequest, 
-  GuestFilters, 
-  SearchGuestsRequest, 
-  SearchType, 
-  UpdateGuestRequest,
+import {
+  CheckInGuestRequest,
+  CreateGuestRequest,
   Guest,
-  GuestStatistics,
-  CheckInGuestRequest
+  GuestFilters,
+  SearchGuestsRequest,
+  UpdateGuestRequest
 } from '../types/guest.types';
+import {BaseController} from './base/base-controller';
 
 // Helper function to convert TypeScript types to JSON Schema
 const createSchemaFromType = (example: any, required: string[] = []) => ({
@@ -27,14 +24,14 @@ const createSchemaFromType = (example: any, required: string[] = []) => ({
   properties: Object.keys(example).reduce((props, key) => {
     const value = example[key];
     let type: any;
-    
+
     if (typeof value === 'string') type = { type: 'string' };
     else if (typeof value === 'number') type = { type: 'number' };
     else if (typeof value === 'boolean') type = { type: 'boolean' };
     else if (Array.isArray(value)) type = { type: 'array', items: { type: 'object' } };
     else if (value && typeof value === 'object') type = { type: 'object' };
     else type = { type: 'string' }; // fallback
-    
+
     return { ...props, [key]: type };
   }, {}),
   required,
@@ -102,9 +99,9 @@ export class GuestController extends BaseController {
             required: ['query', 'searchType'],
             properties: {
               query: { type: 'string', minLength: 1, maxLength: 100 },
-              searchType: { 
-                type: 'string', 
-                enum: ['guest_id', 'english_name', 'khmer_name'] 
+              searchType: {
+                type: 'string',
+                enum: ['guest_id', 'english_name', 'khmer_name']
               },
               limit: { type: 'number', minimum: 1, maximum: 100 },
               offset: { type: 'number', minimum: 0 },
@@ -216,7 +213,7 @@ export class GuestController extends BaseController {
     @param.query.boolean('is_duplicate') is_duplicate?: boolean
   ) {
     const filters: GuestFilters = {};
-    
+
     if (guest_of) filters.guest_of = guest_of as any;
     if (payment_method) filters.payment_method = payment_method as any;
     if (has_payment !== undefined) filters.has_payment = has_payment;
@@ -224,6 +221,63 @@ export class GuestController extends BaseController {
 
     const guests = await this.guestService.getAllGuests(filters);
     return this.success(guests);
+  }
+
+  @get('/guests/paginated')
+  @response(200, {
+    description: 'Get guests with pagination and sorting',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: createSchemaFromType(GUEST_RESPONSE_EXAMPLE)
+                },
+                total: { type: 'number' },
+                page: { type: 'number' },
+                totalPages: { type: 'number' },
+                limit: { type: 'number' }
+              },
+              required: ['data', 'total', 'page', 'totalPages']
+            }
+          },
+          required: ['success', 'data']
+        }
+      }
+    }
+  })
+  async getGuests(
+    @param.query.number('page') page: number = 1,
+    @param.query.number('limit') limit: number = 50,
+    @param.query.string('sortBy') sortBy: string = 'created_at',
+    @param.query.string('sortOrder') sortOrder: 'ASC' | 'DESC' = 'DESC',
+    @param.query.string('guest_of') guest_of?: string,
+    @param.query.string('payment_method') payment_method?: string,
+    @param.query.boolean('has_payment') has_payment?: boolean,
+    @param.query.boolean('is_duplicate') is_duplicate?: boolean
+  ) {
+    const filters: GuestFilters = {};
+
+    if (guest_of) filters.guest_of = guest_of as any;
+    if (payment_method) filters.payment_method = payment_method as any;
+    if (has_payment !== undefined) filters.has_payment = has_payment;
+    if (is_duplicate !== undefined) filters.is_duplicate = is_duplicate;
+
+    const result = await this.guestService.getGuests(
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      filters
+    );
+
+    return this.success(result);
   }
 
   @patch('/guests/{guestId}')
@@ -254,7 +308,7 @@ export class GuestController extends BaseController {
               khmer_name: { type: 'string' },
               amount_khr: { type: 'number', minimum: 0 },
               amount_usd: { type: 'number', minimum: 0 },
-              payment_method: { 
+              payment_method: {
                 oneOf: [
                   { type: 'string', enum: ['QR_Code', 'Cash'] },
                   { type: 'null' }
@@ -302,7 +356,7 @@ export class GuestController extends BaseController {
             properties: {
               amount_khr: { type: 'number', minimum: 0 },
               amount_usd: { type: 'number', minimum: 0 },
-              payment_method: { 
+              payment_method: {
                 oneOf: [
                   { type: 'string', enum: ['QR_Code', 'Cash'] },
                   { type: 'null' }
