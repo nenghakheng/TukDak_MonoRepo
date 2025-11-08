@@ -1,15 +1,15 @@
 import {BootMixin} from '@loopback/boot';
 import {ApplicationConfig} from '@loopback/core';
+import {RepositoryMixin} from '@loopback/repository';
+import {RestApplication} from '@loopback/rest';
 import {
   RestExplorerBindings,
   RestExplorerComponent,
 } from '@loopback/rest-explorer';
-import {RepositoryMixin} from '@loopback/repository';
-import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
-import { ErrorHandlingSequence } from './sequence/error-handling-sequence';
-import { DatabaseService } from './database/database.service';
+import {DatabaseService} from './database/database.service';
+import {ErrorHandlingSequence} from './sequence/error-handling-sequence';
 
 export {ApplicationConfig};
 
@@ -18,6 +18,16 @@ export class TukdakApiApplication extends BootMixin(
 ) {
   constructor(options: ApplicationConfig = {}) {
     super(options);
+
+    // Configure CORS
+    this.configure('rest.cors').to({
+      origin: '*',
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      allowedHeaders: 'Content-Type,Authorization,Accept',
+      exposedHeaders: 'Content-Range,X-Content-Range',
+      credentials: true,
+      maxAge: 86400,
+    });
 
     // Set up lifecycle hooks instead of overriding methods
     this.onStart(async () => {
