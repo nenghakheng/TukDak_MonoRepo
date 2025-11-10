@@ -19,8 +19,7 @@ describe('GuestService', () => {
   describe('createGuest', () => {
     it('should validate required fields', async () => {
       await expect(service.createGuest({
-        guest_id: '',
-        english_name: 'Test',
+        english_name: '',
         khmer_name: 'ពិសី',
         guest_of: 'Bride'
       })).rejects.toThrow(ValidationError);
@@ -28,7 +27,6 @@ describe('GuestService', () => {
 
     it('should validate payment method when amount provided', async () => {
       await expect(service.createGuest({
-        guest_id: 'TEST001',
         english_name: 'Test',
         khmer_name: 'សីហា',
         guest_of: 'Bride',
@@ -41,7 +39,6 @@ describe('GuestService', () => {
       mockRepo.createGuest.mockResolvedValue(mockGuest);
 
       const result = await service.createGuest({
-        guest_id: 'TEST001',
         english_name: 'Test Guest',
         khmer_name: 'នេន និង',
         guest_of: 'Bride'

@@ -14,7 +14,6 @@ export interface Guest {
 
 // Request interfaces
 export interface CreateGuestRequest {
-  guest_id: string;
   english_name?: string;
   khmer_name?: string;
   amount_khr?: number;

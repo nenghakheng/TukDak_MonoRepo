@@ -211,9 +211,6 @@ export class GuestService {
     const details: { field: string; message: string; value?: any; code?: string }[] = [];
 
     // Required fields
-    if (typeof data.guest_id !== 'string' || data.guest_id.trim().length === 0) {
-      details.push({ field: 'guest_id', message: 'Guest ID is required', code: 'REQUIRED' });
-    }
     if (typeof data.english_name !== 'string' || data.english_name.trim().length === 0) {
       details.push({ field: 'english_name', message: 'English Name is required', code: 'REQUIRED' });
     }

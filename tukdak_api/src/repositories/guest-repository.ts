@@ -1,5 +1,5 @@
 import {DatabaseService} from '../database/database.service';
-import {ConflictError, NotFoundError, ValidationError} from '../errors/custom-errors';
+import {NotFoundError, ValidationError} from '../errors/custom-errors';
 import {Guest, SearchResult} from '../types/database.types';
 import {CheckInGuestRequest, CreateGuestRequest, SearchType, UpdateGuestRequest} from '../types/guest.types';
 
@@ -222,29 +222,11 @@ export class GuestRepository {
     }
   }
 
-  async createGuest(guestData: CreateGuestRequest): Promise<Guest> {
+  async createGuest(guestData: Omit<CreateGuestRequest, 'guest_id'>): Promise<Guest> {
     const db = this.getDb();
 
     try {
-      // Check for duplicate guest_id
-      const existingGuest = db.prepare('SELECT guest_id FROM guestlist WHERE guest_id = ?').get(guestData.guest_id);
-      if (existingGuest) {
-        throw new ConflictError(`Guest with ID ${guestData.guest_id} already exists`);
-      }
-
-      // Convert CreateGuestRequest to Guest format with defaults
-      const guestToInsert: Omit<Guest, 'created_at' | 'updated_at'> = {
-        guest_id: guestData.guest_id,
-        english_name: guestData.english_name,
-        khmer_name: guestData.khmer_name,
-        amount_khr: guestData.amount_khr || 0,
-        amount_usd: guestData.amount_usd || 0,
-        payment_method: guestData.payment_method || null,
-        guest_of: guestData.guest_of,
-        is_duplicate: false,
-      };
-
-      // Insert guest with timestamps
+      // Insert guest with timestamps (id and guest_id will be auto-generated)
       const insertGuest = db.prepare(`
         INSERT INTO guestlist
         (guest_id, english_name, khmer_name, amount_khr, amount_usd, payment_method, guest_of, is_duplicate)
@@ -257,42 +239,53 @@ export class GuestRepository {
       `);
 
       const transaction = db.transaction(() => {
+        // Get the next auto-increment value
+        const lastIdResult = db.prepare('SELECT MAX(id) as lastId FROM guestlist').get() as { lastId: number | null };
+        const nextId = (lastIdResult.lastId || 0) + 1;
+
+        // Generate guest_id based on auto-increment id
+        const guest_id = `WED${nextId.toString().padStart(5, '0')}`;
+
         // Insert guest
         const result = insertGuest.run(
-          guestToInsert.guest_id,
-          guestToInsert.english_name,
-          guestToInsert.khmer_name,
-          guestToInsert.amount_khr,
-          guestToInsert.amount_usd,
-          guestToInsert.payment_method,
-          guestToInsert.guest_of,
-          guestToInsert.is_duplicate ? 1 : 0
+          guest_id,
+          guestData.english_name,
+          guestData.khmer_name,
+          guestData.amount_khr || 0,
+          guestData.amount_usd || 0,
+          guestData.payment_method || null,
+          guestData.guest_of,
+          0 // is_duplicate = false
         );
 
         // Log activity
         insertActivity.run(
-          guestToInsert.guest_id,
+          guest_id,
           'created',
-          `Guest created: ${guestToInsert.english_name} (${guestToInsert.guest_of})`
+          `Guest created: ${guestData.english_name} (${guestData.guest_of})`
         );
 
         // If payment provided, log payment activity
-        if (guestToInsert.amount_khr > 0 || guestToInsert.amount_usd > 0) {
+        if ((guestData.amount_khr || 0) > 0 || (guestData.amount_usd || 0) > 0) {
           insertActivity.run(
-            guestToInsert.guest_id,
+            guest_id,
             'payment_received',
-            `Initial payment: ${guestToInsert.amount_khr} KHR / ${guestToInsert.amount_usd} USD`
+            `Initial payment: ${guestData.amount_khr || 0} KHR / ${guestData.amount_usd || 0} USD`
           );
         }
+
+        return guest_id;
       });
 
-      transaction();
+      const generatedGuestId = transaction();
 
       // Return the created guest
-      return this.getGuestById(guestToInsert.guest_id);
+      return await this.getGuestById(generatedGuestId);
 
     } catch (error) {
-      this.logError('CREATE_GUEST_ERROR', error as Error, {guest_id: guestData.guest_id});
+      this.logError('CREATE_GUEST_ERROR', error as Error, {
+        english_name: guestData.english_name
+      });
       throw error;
     }
   }
