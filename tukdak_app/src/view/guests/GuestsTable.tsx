@@ -212,23 +212,25 @@ export const GuestsTable = ({
 
   if (guests.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
-        <p className="text-gray-500 text-lg">No guests found</p>
+      <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-lg p-12 text-center transition-colors">
+        <p className="text-gray-500 dark:text-gray-400 text-lg">
+          No guests found
+        </p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden transition-colors">
         <div className="overflow-x-auto">
           <div className="max-h-[600px] overflow-y-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm transition-colors">
                 <tr>
                   <th
                     onClick={() => handleSort("guest_id")}
-                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
                   >
                     <div className="flex items-center">
                       Guest ID <SortIcon field="guest_id" />
@@ -236,7 +238,7 @@ export const GuestsTable = ({
                   </th>
                   <th
                     onClick={() => handleSort("english_name")}
-                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
                   >
                     <div className="flex items-center">
                       Name <SortIcon field="english_name" />
@@ -244,7 +246,7 @@ export const GuestsTable = ({
                   </th>
                   <th
                     onClick={() => handleSort("guest_of")}
-                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
                   >
                     <div className="flex items-center">
                       Guest Of <SortIcon field="guest_of" />
@@ -252,7 +254,7 @@ export const GuestsTable = ({
                   </th>
                   <th
                     onClick={() => handleSort("amount_khr")}
-                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
                   >
                     <div className="flex items-center">
                       Amount KHR <SortIcon field="amount_khr" />
@@ -260,7 +262,7 @@ export const GuestsTable = ({
                   </th>
                   <th
                     onClick={() => handleSort("amount_usd")}
-                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
                   >
                     <div className="flex items-center">
                       Amount USD <SortIcon field="amount_usd" />
@@ -268,38 +270,40 @@ export const GuestsTable = ({
                   </th>
                   <th
                     onClick={() => handleSort("payment_method")}
-                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors select-none"
                   >
                     <div className="flex items-center">
                       Payment Method <SortIcon field="payment_method" />
                     </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
 
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-transparent divide-y divide-gray-200 dark:divide-gray-700 transition-colors">
                 {sortedGuests.map((guest, index) => (
                   <tr
                     key={guest.guest_id}
                     onClick={(e) => handleRowClick(guest, e)}
                     className={`transition-colors ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      index % 2 === 0
+                        ? "bg-white/40 dark:bg-gray-800/40"
+                        : "bg-gray-50/40 dark:bg-gray-750/40"
                     } ${
                       guest.payment_method
-                        ? "cursor-pointer hover:bg-blue-50"
+                        ? "cursor-pointer hover:bg-rose-50/60 dark:hover:bg-rose-900/30"
                         : "cursor-default"
                     }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {guest.guest_id}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {guest.english_name}
                       </div>
                     </td>
@@ -315,22 +319,22 @@ export const GuestsTable = ({
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {formatCurrency(guest.amount_khr, "KHR")}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {formatCurrency(guest.amount_usd, "USD")}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {guest.payment_method ? (
-                        <div className="px-2 py-1 inline-flex text-xs font-semibold rounded-full text-gray-600 bg-gray-100">
+                        <div className="px-2 py-1 inline-flex text-xs font-semibold rounded-full text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700">
                           {guest.payment_method.replace(/_/g, " ")}
                         </div>
                       ) : (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
                           Pending
                         </span>
                       )}
@@ -339,12 +343,12 @@ export const GuestsTable = ({
                       {!guest.payment_method ? (
                         <button
                           onClick={(e) => handleCheckIn(guest, e)}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm hover:shadow-md"
+                          className="px-4 py-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 dark:from-rose-700 dark:to-pink-700 dark:hover:from-rose-800 dark:hover:to-pink-800 text-white text-sm font-semibold rounded-lg transition-all shadow-md hover:shadow-lg"
                         >
                           Check In
                         </button>
                       ) : (
-                        <span className="px-4 py-2 bg-green-100 text-green-800 text-sm font-semibold rounded-lg inline-block">
+                        <span className="px-4 py-2 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 text-sm font-semibold rounded-lg inline-block">
                           Checked In
                         </span>
                       )}
@@ -357,10 +361,10 @@ export const GuestsTable = ({
         </div>
 
         {/* Pagination Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+        <div className="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm px-6 py-4 border-t border-gray-200 dark:border-gray-600 transition-colors">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
                 Showing <span className="font-semibold">{startItem}</span> to{" "}
                 <span className="font-semibold">{endItem}</span> of{" "}
                 <span className="font-semibold">{totalGuests}</span> guests
@@ -371,13 +375,13 @@ export const GuestsTable = ({
               <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeftIcon className="h-5 w-5 mr-1" />
                 Previous
               </button>
 
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Page <span className="font-bold">{currentPage}</span> of{" "}
                 <span className="font-bold">{totalPages}</span>
               </span>
@@ -385,7 +389,7 @@ export const GuestsTable = ({
               <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
                 <ChevronRightIcon className="h-5 w-5 ml-1" />
@@ -395,7 +399,9 @@ export const GuestsTable = ({
                 onSubmit={handleJumpToPage}
                 className="flex items-center gap-2"
               >
-                <span className="text-sm text-gray-600">Go to:</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Go to:
+                </span>
                 <input
                   type="number"
                   min="1"
@@ -403,11 +409,11 @@ export const GuestsTable = ({
                   value={jumpToPage}
                   onChange={(e) => setJumpToPage(e.target.value)}
                   placeholder={currentPage.toString()}
-                  className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-center bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
                 />
                 <button
                   type="submit"
-                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors"
+                  className="px-3 py-1 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 dark:from-rose-700 dark:to-pink-700 dark:hover:from-rose-800 dark:hover:to-pink-800 text-white text-sm font-medium rounded transition-all shadow-sm"
                 >
                   Go
                 </button>
