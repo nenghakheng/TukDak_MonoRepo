@@ -8,7 +8,7 @@ export const DATABASE_SCHEMA = {
       amount_khr DECIMAL(12,2) DEFAULT 0,
       amount_usd DECIMAL(10,2) DEFAULT 0,
       payment_method TEXT CHECK(payment_method IN ('QR_Code', 'Cash')),
-      guest_of TEXT CHECK(guest_of IN ('Bride', 'Groom', 'Bride_Parents', 'Groom_Parents')) NOT NULL,
+      guest_of TEXT CHECK(guest_of IN ('Bride', 'Groom', 'Bride_Parents', 'Groom_Parents', 'Bride_Sibling', 'Groom_Sibling') OR guest_of IS NULL),
       is_duplicate BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -49,7 +49,6 @@ export const DATABASE_SCHEMA = {
 
   // Indexes for performance - Updated for search optimization
   INDEXES: [
-    'CREATE INDEX IF NOT EXISTS idx_guestlist_name ON guestlist(name)',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_english_name ON guestlist(english_name)',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_khmer_name ON guestlist(khmer_name)',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_guest_of ON guestlist(guest_of)',
@@ -61,7 +60,6 @@ export const DATABASE_SCHEMA = {
 
     // Search optimization indexes
     'CREATE INDEX IF NOT EXISTS idx_guestlist_guest_id_lower ON guestlist(LOWER(guest_id))',
-    'CREATE INDEX IF NOT EXISTS idx_guestlist_name_lower ON guestlist(LOWER(name))',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_english_name_lower ON guestlist(LOWER(english_name))',
     'CREATE INDEX IF NOT EXISTS idx_guestlist_khmer_name_lower ON guestlist(LOWER(khmer_name))',
 

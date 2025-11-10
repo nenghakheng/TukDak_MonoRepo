@@ -240,20 +240,20 @@ export class GuestRepository {
 
       const transaction = db.transaction(() => {
         // Get the next auto-increment value
-        const lastIdResult = db.prepare('SELECT MAX(id) as lastId FROM guestlist').get() as { lastId: number | null };
-        const nextId = (lastIdResult.lastId || 0) + 1;
+        const lastIdResult = db.prepare('SELECT MAX(guest_id) as lastId FROM guestlist').get() as { lastId: number | null };
+        const nextId = (lastIdResult.lastId ?? 0) + 1;
 
-        // Generate guest_id based on auto-increment id
-        const guest_id = `WED${nextId.toString().padStart(5, '0')}`;
+        // Use plain integer as guest_id (no prefix)
+        const guest_id = nextId.toString();
 
         // Insert guest
-        const result = insertGuest.run(
+        insertGuest.run(
           guest_id,
           guestData.english_name,
           guestData.khmer_name,
-          guestData.amount_khr || 0,
-          guestData.amount_usd || 0,
-          guestData.payment_method || null,
+          guestData.amount_khr ?? 0,
+          guestData.amount_usd ?? 0,
+          guestData.payment_method ?? null,
           guestData.guest_of,
           0 // is_duplicate = false
         );
@@ -266,11 +266,11 @@ export class GuestRepository {
         );
 
         // If payment provided, log payment activity
-        if ((guestData.amount_khr || 0) > 0 || (guestData.amount_usd || 0) > 0) {
+        if ((guestData.amount_khr ?? 0) > 0 || (guestData.amount_usd ?? 0) > 0) {
           insertActivity.run(
             guest_id,
             'payment_received',
-            `Initial payment: ${guestData.amount_khr || 0} KHR / ${guestData.amount_usd || 0} USD`
+            `Initial payment: ${guestData.amount_khr ?? 0} KHR / ${guestData.amount_usd ?? 0} USD`
           );
         }
 
@@ -531,7 +531,7 @@ export class GuestRepository {
       const currentGuest = await this.getGuestById(guestId);
 
       // Build dynamic update query
-      const allowedFields = ['name', 'amount_khr', 'amount_usd', 'payment_method', 'is_duplicate'];
+      const allowedFields = ['english_name', 'amount_khr', 'amount_usd', 'payment_method', 'is_duplicate'];
       const updateFields: string[] = [];
       const params: any[] = [];
 

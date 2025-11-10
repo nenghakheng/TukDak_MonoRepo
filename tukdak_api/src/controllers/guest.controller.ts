@@ -123,6 +123,63 @@ export class GuestController extends BaseController {
     }
   }
 
+    @get('/guests/paginated')
+  @response(200, {
+    description: 'Get guests with pagination and sorting',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: createSchemaFromType(GUEST_RESPONSE_EXAMPLE)
+                },
+                total: { type: 'number' },
+                page: { type: 'number' },
+                totalPages: { type: 'number' },
+                limit: { type: 'number' }
+              },
+              required: ['data', 'total', 'page', 'totalPages']
+            }
+          },
+          required: ['success', 'data']
+        }
+      }
+    }
+  })
+  async getGuests(
+    @param.query.number('page') page: number = 1,
+    @param.query.number('limit') limit: number = 50,
+    @param.query.string('sortBy') sortBy: string = 'created_at',
+    @param.query.string('sortOrder') sortOrder: 'ASC' | 'DESC' = 'DESC',
+    @param.query.string('guest_of') guest_of?: string,
+    @param.query.string('payment_method') payment_method?: string,
+    @param.query.boolean('has_payment') has_payment?: boolean,
+    @param.query.boolean('is_duplicate') is_duplicate?: boolean
+  ) {
+    const filters: GuestFilters = {};
+
+    if (guest_of) filters.guest_of = guest_of as any;
+    if (payment_method) filters.payment_method = payment_method as any;
+    if (has_payment !== undefined) filters.has_payment = has_payment;
+    if (is_duplicate !== undefined) filters.is_duplicate = is_duplicate;
+
+    const result = await this.guestService.getGuests(
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      filters
+    );
+
+    return this.success(result);
+  }
+
   @post('/guests')
   @response(201, {
     description: 'Create a new guest',
@@ -152,7 +209,7 @@ export class GuestController extends BaseController {
               amount_khr: { type: 'number', minimum: 0 },
               amount_usd: { type: 'number', minimum: 0 },
               payment_method: { type: 'string', enum: ['QR_Code', 'Cash'], nullable: true },
-              guest_of: { type: 'string', enum: ['Bride', 'Groom', 'Bride_Parents', 'Groom_Parents'] }
+              guest_of: { type: 'string', enum: ['Bride', 'Groom', 'Bride_Parents', 'Groom_Parents', 'Bride_Sibling', 'Groom_Sibling'] }
             },
             additionalProperties: false
           }
@@ -220,63 +277,6 @@ export class GuestController extends BaseController {
 
     const guests = await this.guestService.getAllGuests(filters);
     return this.success(guests);
-  }
-
-  @get('/guests/paginated')
-  @response(200, {
-    description: 'Get guests with pagination and sorting',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'object',
-          properties: {
-            success: { type: 'boolean' },
-            data: {
-              type: 'object',
-              properties: {
-                data: {
-                  type: 'array',
-                  items: createSchemaFromType(GUEST_RESPONSE_EXAMPLE)
-                },
-                total: { type: 'number' },
-                page: { type: 'number' },
-                totalPages: { type: 'number' },
-                limit: { type: 'number' }
-              },
-              required: ['data', 'total', 'page', 'totalPages']
-            }
-          },
-          required: ['success', 'data']
-        }
-      }
-    }
-  })
-  async getGuests(
-    @param.query.number('page') page: number = 1,
-    @param.query.number('limit') limit: number = 50,
-    @param.query.string('sortBy') sortBy: string = 'created_at',
-    @param.query.string('sortOrder') sortOrder: 'ASC' | 'DESC' = 'DESC',
-    @param.query.string('guest_of') guest_of?: string,
-    @param.query.string('payment_method') payment_method?: string,
-    @param.query.boolean('has_payment') has_payment?: boolean,
-    @param.query.boolean('is_duplicate') is_duplicate?: boolean
-  ) {
-    const filters: GuestFilters = {};
-
-    if (guest_of) filters.guest_of = guest_of as any;
-    if (payment_method) filters.payment_method = payment_method as any;
-    if (has_payment !== undefined) filters.has_payment = has_payment;
-    if (is_duplicate !== undefined) filters.is_duplicate = is_duplicate;
-
-    const result = await this.guestService.getGuests(
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-      filters
-    );
-
-    return this.success(result);
   }
 
   @patch('/guests/{guestId}')

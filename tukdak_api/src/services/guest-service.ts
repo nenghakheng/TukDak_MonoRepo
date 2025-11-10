@@ -300,8 +300,12 @@ export class GuestService {
     if (updates.payment_method !== undefined && updates.payment_method !== null && !['QR_Code', 'Cash'].includes(updates.payment_method)) {
       throw new ValidationError('Validation failed');
     }
-    if (updates.guest_of !== undefined && !['Bride', 'Groom', 'Bride_Parents', 'Groom_Parents'].includes(updates.guest_of)) {
-      throw new ValidationError('Validation failed');
+    // Allow null for guest_of, but validate if it's a string
+    if (updates.guest_of !== undefined && updates.guest_of !== null) {
+      const validGuestOf = ['Bride', 'Groom', 'Bride_Parents', 'Groom_Parents', 'Bride_Sibling', 'Groom_Sibling'];
+      if (!validGuestOf.includes(updates.guest_of)) {
+        throw new ValidationError('Validation failed');
+      }
     }
     if (updates.is_duplicate !== undefined && typeof updates.is_duplicate !== 'boolean') {
       throw new ValidationError('Validation failed');
