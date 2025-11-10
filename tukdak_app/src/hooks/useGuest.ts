@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 import { guestsApi } from '../api/guest.api';
 import type { Guest } from '../models';
 
@@ -60,6 +61,12 @@ export const useCreateGuestMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guests] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guestsPaginated] });
+      toast.success('Guest created successfully! 🎉');
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Failed to create guest';
+      toast.error(errorMessage);
+      console.error('Create guest error:', error);
     },
   });
 };
@@ -77,6 +84,12 @@ export const useUpdateGuestMutation = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guests] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guestsPaginated] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.guest(variables.id) });
+      toast.success('Guest updated successfully! ✅');
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Failed to update guest';
+      toast.error(errorMessage);
+      console.error('Update guest error:', error);
     },
   });
 };
@@ -92,6 +105,12 @@ export const useDeleteGuestMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guests] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guestsPaginated] });
+      toast.success('Guest deleted successfully! 🗑️');
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Failed to delete guest';
+      toast.error(errorMessage);
+      console.error('Delete guest error:', error);
     },
   });
 };
@@ -117,6 +136,12 @@ export const useCheckInGuestMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guests] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guestsPaginated] });
+      toast.success('Guest checked in successfully! ✨');
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Failed to check in guest';
+      toast.error(errorMessage);
+      console.error('Check-in guest error:', error);
     },
   });
 };

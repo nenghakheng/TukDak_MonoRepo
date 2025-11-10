@@ -239,15 +239,7 @@ export const GuestsTable = ({
                     className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
                   >
                     <div className="flex items-center">
-                      English Name <SortIcon field="english_name" />
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort("khmer_name")}
-                    className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                  >
-                    <div className="flex items-center">
-                      Khmer Name <SortIcon field="khmer_name" />
+                      Name <SortIcon field="english_name" />
                     </div>
                   </th>
                   <th
@@ -312,17 +304,14 @@ export const GuestsTable = ({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">
-                        {guest.khmer_name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getGuestOfColor(
-                          guest.guest_of
+                          guest.guest_of || ""
                         )}`}
                       >
-                        {guest.guest_of.replace(/_/g, " ")}
+                        {guest.guest_of
+                          ? guest.guest_of.replace(/_/g, " ")
+                          : "N/A"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

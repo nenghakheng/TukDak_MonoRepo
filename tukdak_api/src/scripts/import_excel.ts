@@ -119,6 +119,7 @@ class ExcelImporter {
     // If group is null, use 'Bride' as default or skip based on your preference
     return {
       english_name: row.Name.trim(),
+      khmer_name: "N/A",
       guest_of: guestOf,
       amount_khr: 0,
       amount_usd: 0,

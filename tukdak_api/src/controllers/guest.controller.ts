@@ -123,7 +123,7 @@ export class GuestController extends BaseController {
     }
   }
 
-    @get('/guests/paginated')
+  @get('/guests/paginated')
   @response(200, {
     description: 'Get guests with pagination and sorting',
     content: {
@@ -156,7 +156,8 @@ export class GuestController extends BaseController {
     @param.query.number('page') page: number = 1,
     @param.query.number('limit') limit: number = 50,
     @param.query.string('sortBy') sortBy: string = 'created_at',
-    @param.query.string('sortOrder') sortOrder: 'ASC' | 'DESC' = 'DESC',
+    @param.query.string('sortOrder') sortOrder: 'ASC' | 'DESC' = 'ASC',
+    @param.query.string('search') search?: string, // NEW: Simple search parameter
     @param.query.string('guest_of') guest_of?: string,
     @param.query.string('payment_method') payment_method?: string,
     @param.query.boolean('has_payment') has_payment?: boolean,
@@ -174,7 +175,8 @@ export class GuestController extends BaseController {
       limit,
       sortBy,
       sortOrder,
-      filters
+      filters,
+      search,
     );
 
     return this.success(result);

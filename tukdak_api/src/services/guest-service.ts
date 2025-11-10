@@ -161,14 +161,15 @@ export class GuestService {
     limit: number = 50,
     sortBy: string = 'created_at',
     sortOrder: 'ASC' | 'DESC' = 'DESC',
-    filters?: GuestFilters
+    filters?: GuestFilters,
+    search?: string
   ): Promise<{
     data: Guest[];
     total: number;
     page: number;
     totalPages: number;
   }> {
-    const res = await this.guestRepository.getGuests(page, limit, sortBy, sortOrder, filters);
+    const res = await this.guestRepository.getGuests(page, limit, sortBy, sortOrder, filters, search);
     return {
       data: res.data.map(guest => this.normalizeGuest(guest)),
       total: res.total,

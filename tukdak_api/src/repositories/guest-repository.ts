@@ -332,7 +332,8 @@ export class GuestRepository {
       payment_method?: string;
       has_payment?: boolean;
       is_duplicate?: boolean;
-    }
+    },
+    search?: string,
   ): Promise<{
     data: Guest[];
     total: number;
@@ -382,6 +383,13 @@ export class GuestRepository {
         WHERE 1=1
       `;
       const params: any[] = [];
+
+      // Add search filter
+      if (search && search.trim() !== '') {
+        query += ' AND (LOWER(guest_id) LIKE LOWER(?) OR LOWER(english_name) LIKE LOWER(?) OR LOWER(khmer_name) LIKE LOWER(?))';
+        const searchPattern = `%${search.trim()}%`;
+        params.push(searchPattern ,searchPattern, searchPattern);
+      }
 
       // Apply filters
       if (filters?.guest_of) {
@@ -441,6 +449,7 @@ export class GuestRepository {
           limit,
           sortBy,
           sortOrder,
+          search,
           total
         });
       }
@@ -460,7 +469,8 @@ export class GuestRepository {
         page,
         limit,
         sortBy,
-        sortOrder
+        sortOrder,
+        search
       });
       throw error;
     }
