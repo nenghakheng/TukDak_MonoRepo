@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { Guest } from "../../models";
 
-interface CheckInModalProps {
+interface UpdateGuestModalProps {
   guest: Guest | null;
   isOpen: boolean;
   onClose: () => void;
-  onCheckIn: (data: {
+  onUpdate: (data: {
     guest_id: string;
     amount_khr: number;
     amount_usd: number;
@@ -15,16 +15,32 @@ interface CheckInModalProps {
   isLoading?: boolean;
 }
 
-export const CheckInModal = ({
+export const UpdateGuestModal = ({
   guest,
   isOpen,
   onClose,
-  onCheckIn,
+  onUpdate,
   isLoading = false,
-}: CheckInModalProps) => {
+}: UpdateGuestModalProps) => {
   const [currency, setCurrency] = useState<"KHR" | "USD">("KHR");
   const [amount, setAmount] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("QR_Code");
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
+
+  // Initialize form with guest data
+  useEffect(() => {
+    if (guest && isOpen) {
+      setPaymentMethod(guest.payment_method || "");
+
+      // Set currency and amount based on which value is greater
+      if (guest.amount_usd > 0 && guest.amount_usd >= guest.amount_khr / 4000) {
+        setCurrency("USD");
+        setAmount(guest.amount_usd.toString());
+      } else {
+        setCurrency("KHR");
+        setAmount(guest.amount_khr.toString());
+      }
+    }
+  }, [guest, isOpen]);
 
   if (!isOpen || !guest) return null;
 
@@ -33,7 +49,7 @@ export const CheckInModal = ({
 
     const numAmount = parseFloat(amount) || 0;
 
-    onCheckIn({
+    onUpdate({
       guest_id: guest.guest_id,
       amount_khr: currency === "KHR" ? numAmount : 0,
       amount_usd: currency === "USD" ? numAmount : 0,
@@ -43,8 +59,8 @@ export const CheckInModal = ({
 
   const handleClose = () => {
     setAmount("");
+    setPaymentMethod("");
     setCurrency("KHR");
-    setPaymentMethod("QR_Code");
     onClose();
   };
 
@@ -70,7 +86,7 @@ export const CheckInModal = ({
           {/* Header */}
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Check-In Guest
+              Update Guest
             </h2>
           </div>
 
@@ -109,16 +125,20 @@ export const CheckInModal = ({
                   className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
                     guest.guest_of === "Bride"
                       ? "bg-pink-100 text-pink-800"
-                      : "bg-blue-100 text-blue-800"
+                      : guest.guest_of === "Groom"
+                      ? "bg-blue-100 text-blue-800"
+                      : guest.guest_of === "Bride_Parents"
+                      ? "bg-purple-100 text-purple-800"
+                      : "bg-indigo-100 text-indigo-800"
                   }`}
                 >
-                  {guest.guest_of}
+                  {guest.guest_of.replace(/_/g, " ")}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Form */}
+          {/* Update Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Currency Toggle */}
             <div>
@@ -199,7 +219,7 @@ export const CheckInModal = ({
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
-                    {method.replace("_", " ")}
+                    {method.replace(/_/g, " ")}
                   </button>
                 ))}
               </div>
@@ -217,16 +237,16 @@ export const CheckInModal = ({
               </button>
               <button
                 type="submit"
-                disabled={isLoading || !amount}
+                disabled={isLoading || !amount || !paymentMethod}
                 className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Processing...
+                    Updating...
                   </span>
                 ) : (
-                  "Check In"
+                  "Update Guest"
                 )}
               </button>
             </div>

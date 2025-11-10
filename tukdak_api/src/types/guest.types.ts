@@ -19,7 +19,7 @@ export interface CreateGuestRequest {
   khmer_name?: string;
   amount_khr?: number;
   amount_usd?: number;
-  payment_method?: 'QR_Code' | 'Cash';
+  payment_method?: 'QR_Code' | 'Cash' | null;
   guest_of: 'Bride' | 'Groom' | 'Bride_Parents' | 'Groom_Parents';
 }
 

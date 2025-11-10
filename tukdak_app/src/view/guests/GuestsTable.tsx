@@ -7,7 +7,11 @@ import {
 } from "@heroicons/react/24/outline";
 import type { Guest } from "../../models";
 import { CheckInModal } from "../check-in/CheckInModal";
-import { useCheckInGuestMutation } from "../../hooks/useGuest";
+import { UpdateGuestModal } from "./UpdateGuestModal";
+import {
+  useCheckInGuestMutation,
+  useUpdateGuestMutation,
+} from "../../hooks/useGuest";
 
 interface GuestsTableProps {
   guests: Guest[];
@@ -28,10 +32,13 @@ export const GuestsTable = ({
   onPageChange,
 }: GuestsTableProps) => {
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [jumpToPage, setJumpToPage] = useState<string>("");
   const checkInMutation = useCheckInGuestMutation();
+  const updateMutation = useUpdateGuestMutation();
 
   // Sorting logic (client-side for current page)
   const sortedGuests = useMemo(() => {
@@ -117,17 +124,22 @@ export const GuestsTable = ({
   };
 
   const handleRowClick = (guest: Guest, e: React.MouseEvent) => {
+    // Don't open modal if clicking on the check-in button
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    setSelectedGuest(guest);
-    setIsModalOpen(true);
+
+    // Only allow update if guest is already checked in
+    if (guest.payment_method) {
+      setSelectedGuest(guest);
+      setIsUpdateModalOpen(true);
+    }
   };
 
   const handleCheckIn = (guest: Guest, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedGuest(guest);
-    setIsModalOpen(true);
+    setIsCheckInModalOpen(true);
   };
 
   const handleCheckInSubmit = async (data: {
@@ -145,10 +157,41 @@ export const GuestsTable = ({
           payment_method: data.payment_method,
         },
       });
-      setIsModalOpen(false);
+      setIsCheckInModalOpen(false);
       setSelectedGuest(null);
     } catch (error) {
       console.error("Check-in failed:", error);
+    }
+  };
+
+  const handleUpdateSubmit = async (data: {
+    guest_id: string;
+    amount_khr: number;
+    amount_usd: number;
+    payment_method: string;
+  }) => {
+    try {
+      await updateMutation.mutateAsync({
+        id: data.guest_id,
+        data: {
+          amount_khr: data.amount_khr,
+          amount_usd: data.amount_usd,
+          payment_method: data.payment_method,
+        },
+      });
+      setIsUpdateModalOpen(false);
+      setSelectedGuest(null);
+    } catch (error) {
+      console.error("Update failed:", error);
+    }
+  };
+
+  const handleJumpToPage = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(jumpToPage);
+    if (page >= 1 && page <= totalPages) {
+      onPageChange(page);
+      setJumpToPage("");
     }
   };
 
@@ -181,7 +224,6 @@ export const GuestsTable = ({
         <div className="overflow-x-auto">
           <div className="max-h-[600px] overflow-y-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              {/* Fixed Header */}
               <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th
@@ -246,15 +288,18 @@ export const GuestsTable = ({
                 </tr>
               </thead>
 
-              {/* Zebra-striped Body */}
               <tbody className="bg-white divide-y divide-gray-200">
                 {sortedGuests.map((guest, index) => (
                   <tr
                     key={guest.guest_id}
                     onClick={(e) => handleRowClick(guest, e)}
-                    className={`cursor-pointer transition-colors ${
+                    className={`transition-colors ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    } hover:bg-blue-50`}
+                    } ${
+                      guest.payment_method
+                        ? "cursor-pointer hover:bg-blue-50"
+                        : "cursor-default"
+                    }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
@@ -325,7 +370,6 @@ export const GuestsTable = ({
         {/* Pagination Footer */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
-            {/* Showing X-Y of Z guests */}
             <div className="flex-1">
               <p className="text-sm text-gray-700">
                 Showing <span className="font-semibold">{startItem}</span> to{" "}
@@ -334,9 +378,7 @@ export const GuestsTable = ({
               </p>
             </div>
 
-            {/* Pagination Controls */}
             <div className="flex items-center gap-4">
-              {/* Previous Button */}
               <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -346,13 +388,11 @@ export const GuestsTable = ({
                 Previous
               </button>
 
-              {/* Page X of Y */}
               <span className="text-sm font-medium text-gray-700">
                 Page <span className="font-bold">{currentPage}</span> of{" "}
                 <span className="font-bold">{totalPages}</span>
               </span>
 
-              {/* Next Button */}
               <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -361,6 +401,28 @@ export const GuestsTable = ({
                 Next
                 <ChevronRightIcon className="h-5 w-5 ml-1" />
               </button>
+
+              <form
+                onSubmit={handleJumpToPage}
+                className="flex items-center gap-2"
+              >
+                <span className="text-sm text-gray-600">Go to:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={totalPages}
+                  value={jumpToPage}
+                  onChange={(e) => setJumpToPage(e.target.value)}
+                  placeholder={currentPage.toString()}
+                  className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors"
+                >
+                  Go
+                </button>
+              </form>
             </div>
           </div>
         </div>
@@ -369,13 +431,25 @@ export const GuestsTable = ({
       {/* Check-In Modal */}
       <CheckInModal
         guest={selectedGuest}
-        isOpen={isModalOpen}
+        isOpen={isCheckInModalOpen}
         onClose={() => {
-          setIsModalOpen(false);
+          setIsCheckInModalOpen(false);
           setSelectedGuest(null);
         }}
         onCheckIn={handleCheckInSubmit}
         isLoading={checkInMutation.isPending}
+      />
+
+      {/* Update Guest Modal */}
+      <UpdateGuestModal
+        guest={selectedGuest}
+        isOpen={isUpdateModalOpen}
+        onClose={() => {
+          setIsUpdateModalOpen(false);
+          setSelectedGuest(null);
+        }}
+        onUpdate={handleUpdateSubmit}
+        isLoading={updateMutation.isPending}
       />
     </>
   );

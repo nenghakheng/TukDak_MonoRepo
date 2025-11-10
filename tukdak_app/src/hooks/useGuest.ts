@@ -8,20 +8,20 @@ const QUERY_KEYS = {
   guest: (id: string) => ['guest', id],
 };
 
-  /**
-   * Fetch paginated guests
-   */
-  export const useGuestsPaginatedQuery = (params?: { 
-    page?: number; 
-    limit?: number;
-    search?: string; 
-    guest_of?: string; 
-  }) => {
-    return useQuery({
-      queryKey: [QUERY_KEYS.guestsPaginated, params],
-      queryFn: () => guestsApi.getGuestsPaginated(params),
-    });
-  };
+/**
+ * Fetch paginated guests
+ */
+export const useGuestsPaginatedQuery = (params?: { 
+  page?: number; 
+  limit?: number;
+  search?: string; 
+  guest_of?: string; 
+}) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.guestsPaginated, params],
+    queryFn: () => guestsApi.getGuestsPaginated(params),
+  });
+};
 
 /**
  * Fetch all guests
@@ -59,6 +59,7 @@ export const useCreateGuestMutation = () => {
     mutationFn: (data: Partial<Guest>) => guestsApi.createGuest(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guests] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guestsPaginated] });
     },
   });
 };
@@ -74,6 +75,7 @@ export const useUpdateGuestMutation = () => {
       guestsApi.updateGuest(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guests] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guestsPaginated] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.guest(variables.id) });
     },
   });
@@ -89,6 +91,7 @@ export const useDeleteGuestMutation = () => {
     mutationFn: (id: string) => guestsApi.deleteGuest(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guests] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guestsPaginated] });
     },
   });
 };
@@ -112,7 +115,8 @@ export const useCheckInGuestMutation = () => {
       };
     }) => guestsApi.updateGuest(guest_id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests'] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guests] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.guestsPaginated] });
     },
   });
 };
