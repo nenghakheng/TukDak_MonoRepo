@@ -1,34 +1,34 @@
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
 import { Outlet, NavLink } from "react-router-dom";
-import { SunIcon, MoonIcon } from "@heroicons/react/24/outline";
+// import { SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 import { Toast } from "./Toast";
 import weddingBg from "../assets/wedding_bg.jpg";
-import appIcon from "../assets/icon.png";
+// import appIcon from "../assets/icon.png";
 
 export const Layout = () => {
-  const [darkMode, setDarkMode] = useState(() => {
-    // Check localStorage or system preference
-    const saved = localStorage.getItem("darkMode");
-    if (saved !== null) {
-      return saved === "true";
-    }
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
+  // const [darkMode, setDarkMode] = useState(() => {
+  //   // Check localStorage or system preference
+  //   const saved = localStorage.getItem("darkMode");
+  //   if (saved !== null) {
+  //     return saved === "true";
+  //   }
+  //   return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  // });
 
-  useEffect(() => {
-    // Apply dark mode class to document
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    // Save to localStorage
-    localStorage.setItem("darkMode", darkMode.toString());
-  }, [darkMode]);
+  // useEffect(() => {
+  //   // Apply dark mode class to document
+  //   if (darkMode) {
+  //     document.documentElement.classList.add("dark");
+  //   } else {
+  //     document.documentElement.classList.remove("dark");
+  //   }
+  //   // Save to localStorage
+  //   localStorage.setItem("darkMode", darkMode.toString());
+  // }, [darkMode]);
 
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => !prev);
-  };
+  // const toggleDarkMode = () => {
+  //   setDarkMode((prev) => !prev);
+  // };
 
   return (
     <div className="min-h-screen relative">

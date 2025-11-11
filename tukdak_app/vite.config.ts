@@ -13,4 +13,20 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    host: true,
+    port: 3001,
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'query-vendor': ['@tanstack/react-query'],
+        },
+      },
+    },
+  },
 })
