@@ -66,14 +66,12 @@ export const createMockRepository = (): MockGuestRepository => ({
 });
 
 export const validCreateRequest: CreateGuestRequest = {
-  guest_id: 'TEST001',
   english_name: 'Test',
   khmer_name: 'តេស្ត',
   guest_of: 'Bride',
 };
 
 export const validCreateRequestWithPayment: CreateGuestRequest = {
-  guest_id: 'TEST001',
   english_name: 'Test',
   khmer_name: 'តេស្ត',
   amount_khr: 500000,

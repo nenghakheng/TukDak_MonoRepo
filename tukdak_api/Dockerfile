@@ -36,6 +36,9 @@ RUN mkdir -p /home/node/app/data
 # Bind to all network interfaces so that it can be mapped to the host OS
 ENV HOST=0.0.0.0 PORT=3000 NODE_ENV=production
 
+# Define volume for persistent data
+VOLUME ["/home/node/app/data"]
+
 EXPOSE ${PORT}
 
 # Add health check

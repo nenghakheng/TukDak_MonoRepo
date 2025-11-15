@@ -1,15 +1,15 @@
-import { GuestRepository } from '../repositories/guest-repository';
+import {ValidationError} from '../errors/custom-errors';
+import {GuestRepository} from '../repositories/guest-repository';
 import {
-  Guest,
+  CheckInGuestRequest,
   CreateGuestRequest,
-  UpdateGuestRequest,
-  SearchGuestsRequest,
+  Guest,
   GuestFilters,
-  SearchType,
+  SearchGuestsRequest,
   SearchResult,
-  CheckInGuestRequest
+  SearchType,
+  UpdateGuestRequest
 } from '../types/guest.types';
-import { ValidationError, NotFoundError } from '../errors/custom-errors';
 
 export class GuestService {
   private guestRepository: GuestRepository;
@@ -24,11 +24,11 @@ export class GuestService {
   async searchGuests(searchRequest: SearchGuestsRequest): Promise<SearchResult> {
     // Validate the search request
     this.validateSearchRequest(searchRequest);
-    
+
     // Set default values for limit and offset
     const limit = searchRequest.limit ?? 50;
     const offset = searchRequest.offset ?? 0;
-    
+
     // Call repository with individual parameters (to match test expectations)
     const result = await this.guestRepository.searchGuests(
       searchRequest.query,
@@ -36,12 +36,12 @@ export class GuestService {
       limit,
       offset
     );
-    
+
     // Performance warning (to match test expectations)
     if (result.search_time_ms > 200) {
       console.warn(`Search performance warning: ${result.search_time_ms}ms for query "${searchRequest.query}" (${searchRequest.searchType})`);
     }
-    
+
     // Return normalized result to match expected SearchResult type
     return {
       guests: result.guests.map(guest => this.normalizeGuest(guest)),
@@ -58,7 +58,7 @@ export class GuestService {
   async quickSearch(query: string, searchType: SearchType): Promise<Guest[]> {
     // Call repository with default limit and explicit offset
     const result = await this.guestRepository.searchGuests(query, searchType, 20, 0);
-    
+
     // Map the result to ensure type consistency
     return result.guests.map(guest => ({
       guest_id: guest.guest_id,
@@ -156,6 +156,28 @@ export class GuestService {
     return results.map(guest => this.normalizeGuest(guest));
   }
 
+  async getGuests(
+    page: number = 1,
+    limit: number = 50,
+    sortBy: string = 'created_at',
+    sortOrder: 'ASC' | 'DESC' = 'DESC',
+    filters?: GuestFilters,
+    search?: string
+  ): Promise<{
+    data: Guest[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const res = await this.guestRepository.getGuests(page, limit, sortBy, sortOrder, filters, search);
+    return {
+      data: res.data.map(guest => this.normalizeGuest(guest)),
+      total: res.total,
+      page: res.page,
+      totalPages: res.totalPages,
+    };
+  }
+
   async updateGuest(guestId: string, updates: UpdateGuestRequest): Promise<Guest> {
     if (!guestId || typeof guestId !== 'string' || guestId.trim().length === 0) {
       throw new ValidationError('Valid guest ID is required');
@@ -190,9 +212,6 @@ export class GuestService {
     const details: { field: string; message: string; value?: any; code?: string }[] = [];
 
     // Required fields
-    if (typeof data.guest_id !== 'string' || data.guest_id.trim().length === 0) {
-      details.push({ field: 'guest_id', message: 'Guest ID is required', code: 'REQUIRED' });
-    }
     if (typeof data.english_name !== 'string' || data.english_name.trim().length === 0) {
       details.push({ field: 'english_name', message: 'English Name is required', code: 'REQUIRED' });
     }
@@ -241,7 +260,7 @@ export class GuestService {
   private validateUpdateGuestData(updates: UpdateGuestRequest): void {
     const allowedFields = ['english_name', 'khmer_name', 'amount_khr', 'amount_usd', 'payment_method', 'guest_of', 'is_duplicate'];
     const providedFields = Object.keys(updates);
-    
+
     if (providedFields.length === 0) {
       throw new ValidationError('At least one field must be provided for update');
     }
@@ -282,8 +301,12 @@ export class GuestService {
     if (updates.payment_method !== undefined && updates.payment_method !== null && !['QR_Code', 'Cash'].includes(updates.payment_method)) {
       throw new ValidationError('Validation failed');
     }
-    if (updates.guest_of !== undefined && !['Bride', 'Groom', 'Bride_Parents', 'Groom_Parents'].includes(updates.guest_of)) {
-      throw new ValidationError('Validation failed');
+    // Allow null for guest_of, but validate if it's a string
+    if (updates.guest_of !== undefined && updates.guest_of !== null) {
+      const validGuestOf = ['Bride', 'Groom', 'Bride_Parents', 'Groom_Parents', 'Bride_Sibling', 'Groom_Sibling'];
+      if (!validGuestOf.includes(updates.guest_of)) {
+        throw new ValidationError('Validation failed');
+      }
     }
     if (updates.is_duplicate !== undefined && typeof updates.is_duplicate !== 'boolean') {
       throw new ValidationError('Validation failed');

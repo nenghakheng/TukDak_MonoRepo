@@ -38,7 +38,7 @@ describe('GuestService - Search Functionality', () => {
     const repo = {
       searchGuests: jest.fn(),
     } as unknown as jest.Mocked<GuestRepository>;
-    
+
     (GuestRepository as jest.MockedClass<typeof GuestRepository>).mockImplementation(() => repo);
     service = new GuestService();
     mockRepo = (service as unknown as { guestRepository: jest.Mocked<GuestRepository> }).guestRepository;
@@ -232,32 +232,8 @@ describe('GuestService', () => {
       expect(result).toEqual(mockGuest);
     });
 
-    it('should validate required fields - empty guest_id', async () => {
-      try {
-        await service.createGuest({
-          guest_id: '',
-          english_name: 'Test',
-          guest_of: 'Bride'
-        });
-        fail('Should have thrown ValidationError');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ValidationError);
-        expect((error as ValidationError).name).toBe('ValidationError');
-        expect((error as ValidationError).message).toBe('Validation failed');
-        expect((error as ValidationError).details).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              field: 'guest_id',
-              code: 'REQUIRED'
-            })
-          ])
-        );
-      }
-    });
-
     it('should validate required fields - empty name', async () => {
       await expect(service.createGuest({
-        guest_id: 'TEST001',
         english_name: '',
         khmer_name: '',
         guest_of: 'Bride'
@@ -266,7 +242,6 @@ describe('GuestService', () => {
 
     it('should validate required fields - invalid guest_of', async () => {
       await expect(service.createGuest({
-        guest_id: 'TEST001',
         english_name: 'Test',
         khmer_name: 'តេស្ត',
         guest_of: 'InvalidValue' as any
@@ -275,7 +250,6 @@ describe('GuestService', () => {
 
     it('should validate payment method when amount provided', async () => {
       await expect(service.createGuest({
-        guest_id: 'TEST001',
         english_name: 'Test',
         khmer_name: 'តេស្ត',
         guest_of: 'Bride',
@@ -286,7 +260,6 @@ describe('GuestService', () => {
 
     it('should validate negative amounts - KHR', async () => {
       await expect(service.createGuest({
-        guest_id: 'TEST001',
         english_name: 'Test',
         khmer_name: 'តេស្ត',
         guest_of: 'Bride',
@@ -296,7 +269,6 @@ describe('GuestService', () => {
 
     it('should validate negative amounts - USD', async () => {
       await expect(service.createGuest({
-        guest_id: 'TEST001',
         english_name: 'Test',
         khmer_name: 'តេស្ត',
         guest_of: 'Bride',

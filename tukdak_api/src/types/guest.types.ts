@@ -1,26 +1,29 @@
-// Base Guest interface - make sure this matches the database schema
+// Type aliases for better maintainability
+export type PaymentMethod = 'QR_Code' | 'Cash';
+export type GuestOf = 'Bride' | 'Groom' | 'Bride_Parents' | 'Groom_Parents' | 'Bride_Sibling' | 'Groom_Sibling';
+
+// Base Guest interface - matches the database schema
 export interface Guest {
   guest_id: string;
-  english_name?: string | null;
-  khmer_name?: string | null;
+  english_name: string | null;
+  khmer_name: string | null;
   amount_khr: number;
   amount_usd: number;
-  payment_method?: 'QR_Code' | 'Cash' | null;
-  guest_of: 'Bride' | 'Groom' | 'Bride_Parents' | 'Groom_Parents';
+  payment_method: PaymentMethod | null;
+  guest_of: GuestOf | null; // Allow null
   is_duplicate: boolean;
-  created_at: string;  // Make this required and always string
-  updated_at: string;  // Make this required and always string
+  created_at: string;
+  updated_at: string;
 }
 
 // Request interfaces
 export interface CreateGuestRequest {
-  guest_id: string;
-  english_name?: string;
+  english_name: string;
   khmer_name?: string;
   amount_khr?: number;
   amount_usd?: number;
-  payment_method?: 'QR_Code' | 'Cash';
-  guest_of: 'Bride' | 'Groom' | 'Bride_Parents' | 'Groom_Parents';
+  payment_method?: PaymentMethod | null;
+  guest_of?: GuestOf | null; // Allow null
 }
 
 export interface UpdateGuestRequest {
@@ -28,15 +31,15 @@ export interface UpdateGuestRequest {
   khmer_name?: string;
   amount_khr?: number;
   amount_usd?: number;
-  payment_method?: 'QR_Code' | 'Cash' | null;
-  guest_of?: 'Bride' | 'Groom' | 'Bride_Parents' | 'Groom_Parents';
+  payment_method?: PaymentMethod | null;
+  guest_of?: GuestOf | null; // Allow null
   is_duplicate?: boolean;
 }
 
 export interface CheckInGuestRequest {
   amount_khr?: number;
   amount_usd?: number;
-  payment_method?: 'QR_Code' | 'Cash';
+  payment_method: PaymentMethod; // Required for check-in
 }
 
 // Search related types
@@ -52,8 +55,8 @@ export interface SearchGuestsRequest {
 
 // Filter interface
 export interface GuestFilters {
-  guest_of?: 'Bride' | 'Groom' | 'Bride_Parents' | 'Groom_Parents';
-  payment_method?: 'QR_Code' | 'Cash';
+  guest_of?: GuestOf;
+  payment_method?: PaymentMethod;
   has_payment?: boolean;
   is_duplicate?: boolean;
 }
@@ -76,6 +79,8 @@ export interface GuestStatistics {
     groom: number;
     bride_parents: number;
     groom_parents: number;
+    bride_sibling: number;
+    groom_sibling: number;
   };
 }
 
@@ -88,6 +93,14 @@ export interface SearchResult {
   search_type: SearchType;
 }
 
+// Pagination response
+export interface PaginatedGuestsResponse {
+  data: Guest[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
 // API Response wrapper
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -97,5 +110,18 @@ export interface ApiResponse<T = unknown> {
     code?: string;
     details?: any;
   };
+  timestamp: string;
+}
+
+// Activity log types
+export interface ActivityLog {
+  id: number;
+  guest_id: string;
+  action: 'created' | 'updated' | 'deleted' | 'payment_received' | 'duplicate_marked' | 'duplicate_resolved' | 'searched';
+  old_amount_khr?: number | null;
+  new_amount_khr?: number | null;
+  old_amount_usd?: number | null;
+  new_amount_usd?: number | null;
+  details?: string;
   timestamp: string;
 }
