@@ -124,14 +124,18 @@ export const GuestsTable = ({
   };
 
   const handleRowClick = (guest: Guest, e: React.MouseEvent) => {
-    // Don't open modal if clicking on the check-in button
+    // Don't open modal if clicking on a button
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
 
-    // Only allow update if guest is already checked in
-    if (guest.payment_method) {
-      setSelectedGuest(guest);
+    setSelectedGuest(guest);
+
+    // If guest is not checked in, show check-in modal
+    // If guest is checked in, show update modal
+    if (!guest.payment_method) {
+      setIsCheckInModalOpen(true);
+    } else {
       setIsUpdateModalOpen(true);
     }
   };
@@ -287,14 +291,14 @@ export const GuestsTable = ({
                   <tr
                     key={guest.guest_id}
                     onClick={(e) => handleRowClick(guest, e)}
-                    className={`transition-colors ${
+                    className={`transition-colors cursor-pointer ${
                       index % 2 === 0
                         ? "bg-white/40 dark:bg-gray-800/40"
                         : "bg-gray-50/40 dark:bg-gray-750/40"
                     } ${
                       guest.payment_method
-                        ? "cursor-pointer hover:bg-rose-50/60 dark:hover:bg-rose-900/30"
-                        : "cursor-default"
+                        ? "hover:bg-rose-50/60 dark:hover:bg-rose-900/30"
+                        : "hover:bg-yellow-50/60 dark:hover:bg-yellow-900/30"
                     }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -409,7 +413,7 @@ export const GuestsTable = ({
                   value={jumpToPage}
                   onChange={(e) => setJumpToPage(e.target.value)}
                   placeholder={currentPage.toString()}
-                  className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-center bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-colors"
+                  className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-center bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-rose-400 transition-colors"
                 />
                 <button
                   type="submit"

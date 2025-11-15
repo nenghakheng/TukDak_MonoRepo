@@ -37,7 +37,7 @@ RUN mkdir -p /home/node/app/data
 ENV HOST=0.0.0.0 PORT=3000 NODE_ENV=production
 
 # Define volume for persistent data
-VOLUME ["/home/node/app/data"]
+VOLUME ["/home/node/app/data", "/home/node/app/imports"]
 
 EXPOSE ${PORT}
 

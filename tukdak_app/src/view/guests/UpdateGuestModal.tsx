@@ -103,18 +103,10 @@ export const UpdateGuestModal = ({
               </div>
               <div>
                 <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">
-                  English Name
+                  Name
                 </span>
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {guest.english_name}
-                </p>
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">
-                  Khmer Name
-                </span>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {guest.khmer_name}
                 </p>
               </div>
               <div>
@@ -189,7 +181,7 @@ export const UpdateGuestModal = ({
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  step={currency === "KHR" ? "1000" : "0.01"}
+                  step="any"
                   min="0"
                   required
                   className="w-full pl-12 pr-4 py-3 border-2 border-rose-200 dark:border-rose-800 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-rose-500 dark:focus:border-rose-400 focus:outline-none transition-colors text-lg font-semibold"
@@ -208,7 +200,7 @@ export const UpdateGuestModal = ({
                 Payment Method
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {["QR_Code", "Cash", "Bank_Transfer"].map((method) => (
+                {["QR_Code", "Cash"].map((method) => (
                   <button
                     key={method}
                     type="button"

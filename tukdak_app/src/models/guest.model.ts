@@ -5,7 +5,7 @@ export interface Guest {
   guest_of: 'Bride' | 'Groom' | string;
   amount_khr: number;
   amount_usd: number;
-  payment_method: 'QR_Code' | 'Cash' | 'Bank_Transfer' | string | null;
+  payment_method: 'QR_Code' | 'Cash' | string | null;
   is_duplicate: boolean;
   created_at: string;
   updated_at: string;
@@ -14,7 +14,7 @@ export interface Guest {
 export interface CheckInGuest {
   amount_khr: number;
   amount_usd: number;
-  payment_method: 'QR_Code' | 'Cash' | 'Bank_Transfer' | string | null;
+  payment_method: 'QR_Code' | 'Cash' | string | null;
 }
 
 export interface GuestsResponse {
