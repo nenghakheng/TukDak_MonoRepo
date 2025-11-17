@@ -2,7 +2,7 @@
 import { Outlet, NavLink } from "react-router-dom";
 // import { SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 import { Toast } from "./Toast";
-import weddingBg from "../assets/wedding_bg.jpg";
+// import weddingBg from "../assets/wedding_bg.jpg";
 // import appIcon from "../assets/icon.png";
 
 export const Layout = () => {
@@ -31,18 +31,7 @@ export const Layout = () => {
   // };
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background Image with Overlay */}
-      <div className="fixed inset-0 z-0">
-        <img
-          src={weddingBg}
-          alt="Wedding background"
-          className="w-full h-full object-cover"
-        />
-        {/* Transparent overlay - warm rose/pink tints */}
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-50/92 via-pink-50/90 to-purple-50/92 dark:from-rose-950/95 dark:via-pink-950/95 dark:to-purple-950/95 transition-colors" />
-      </div>
-
+    <div className="min-h-screen relative bg-red-100">
       {/* Content wrapper */}
       <div className="relative z-10">
         <Toast />

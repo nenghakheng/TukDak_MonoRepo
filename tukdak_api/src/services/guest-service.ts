@@ -218,7 +218,13 @@ export class GuestService {
     if (typeof data.khmer_name !== 'string' || data.khmer_name.trim().length === 0) {
       details.push({ field: 'khmer_name', message: 'Khmer Name is required', code: 'REQUIRED' });
     }
-    if (!data.guest_of || !['Bride', 'Groom', 'Bride_Parents', 'Groom_Parents'].includes(data.guest_of)) {
+    if (!data.guest_of || !['Bride',
+      'Groom',
+      'Bride_Parents',
+      'Groom_Parents',
+      'Bride_Sibling',
+      'Groom_Sibling'
+    ].includes(data.guest_of)) {
       // Keep generic for invalid value
       details.push({ field: 'guest_of', message: 'Invalid guest_of', code: 'INVALID_TYPE' });
     }

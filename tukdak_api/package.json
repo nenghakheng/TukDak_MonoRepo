@@ -45,6 +45,7 @@
     "migrate:rollback": "npx ts-node src/database/migrations.ts rollback",
     "migrate:build": "npm run build && node dist/database/migrations.js up",
     "import:excel": "ts-node src/scripts/import_excel.ts",
+    "import:excel:prod": "node dist/scripts/import_excel.js",
     "generate:sample": "ts-node src/scripts/import_excel.ts --generate-sample"
   },
   "eslintConfig": {

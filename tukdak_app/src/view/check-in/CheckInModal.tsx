@@ -39,6 +39,10 @@ export const CheckInModal = ({
       amount_usd: currency === "USD" ? numAmount : 0,
       payment_method: paymentMethod,
     });
+
+    setAmount("");
+    setCurrency("KHR");
+    setPaymentMethod("QR_Code");
   };
 
   const handleClose = () => {
@@ -169,7 +173,7 @@ export const CheckInModal = ({
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  step={currency === "KHR" ? "1000" : "0.01"}
+                  step="any"
                   min="0"
                   required
                   className="w-full pl-12 pr-4 py-3 border-2 border-rose-200 dark:border-rose-800 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-rose-500 dark:focus:border-rose-400 focus:outline-none transition-colors text-lg font-semibold"
@@ -188,7 +192,7 @@ export const CheckInModal = ({
                 Payment Method
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {["QR_Code", "Cash", "Bank_Transfer"].map((method) => (
+                {["QR_Code", "Cash"].map((method) => (
                   <button
                     key={method}
                     type="button"
