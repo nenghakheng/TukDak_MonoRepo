@@ -56,6 +56,22 @@ export const Layout = () => {
                 {/* Navigation Links */}
                 <div className="hidden sm:flex sm:space-x-8">
                   <NavLink
+                    to="/dashboard"
+                    className={({ isActive }) =>
+                      `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
+                        isActive
+                          ? "border-rose-500 text-rose-900 dark:text-rose-100"
+                          : "border-transparent text-rose-700 dark:text-rose-300 hover:border-rose-300 hover:text-rose-900 dark:hover:text-rose-100"
+                      }`
+                    }
+                  >
+                    Dashboard
+                  </NavLink>
+                </div>
+
+                {/* Navigation Links */}
+                <div className="hidden sm:flex sm:space-x-8">
+                  <NavLink
                     to="/guests"
                     className={({ isActive }) =>
                       `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
