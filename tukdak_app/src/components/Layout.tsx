@@ -1,11 +1,20 @@
 // import { useState, useEffect } from "react";
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
 // import { SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 import { Toast } from "./Toast";
+import { useAuth } from "../context/AuthContext";
 // import weddingBg from "../assets/wedding_bg.jpg";
 // import appIcon from "../assets/icon.png";
 
 export const Layout = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   // const [darkMode, setDarkMode] = useState(() => {
   //   // Check localStorage or system preference
   //   const saved = localStorage.getItem("darkMode");
@@ -86,20 +95,15 @@ export const Layout = () => {
                 </div>
               </div>
 
-              {/* Dark Mode Toggle */}
-              {/* <div className="flex items-center">
+              {/* Logout Button */}
+              <div className="flex items-center">
                 <button
-                  onClick={toggleDarkMode}
-                  className="p-2 rounded-lg bg-rose-100 dark:bg-rose-900/50 hover:bg-rose-200 dark:hover:bg-rose-800/50 transition-colors shadow-sm"
-                  aria-label="Toggle dark mode"
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-sm font-medium text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-rose-100 transition-colors"
                 >
-                  {darkMode ? (
-                    <SunIcon className="h-5 w-5 text-amber-500" />
-                  ) : (
-                    <MoonIcon className="h-5 w-5 text-rose-700" />
-                  )}
+                  Logout
                 </button>
-              </div> */}
+              </div>
             </div>
           </div>
         </nav>
